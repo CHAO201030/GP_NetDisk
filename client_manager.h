@@ -1,7 +1,7 @@
-#ifndef __H_CLIENT_MANAGER_H__
-#define __H_CLIENT_MANAGER_H__
+#ifndef __CLIENT_MANAGER_H__
+#define __CLIENT_MANAGER_H__
 
-#include "H_head.h"
+#include "head.h"
 
 #define HASH_MAP_CAPACITY 10
 #define HASH_MAP_LOAD_FACTOR 0.75
