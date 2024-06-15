@@ -1,7 +1,5 @@
 #include "../include/net_disk.h"
 
-extern int epfd;
-
 void* pth_func(void *args)
 {
     thread_pool_t *p_manager = (thread_pool_t *)args; 
@@ -19,21 +17,17 @@ void* pth_func(void *args)
         
         if(new_client.fd == -1)
         {
-            printf("[INFO] : thread %ld will exit...\n", tid);
+            //printf("[INFO] : thread %ld will exit...\n", tid);
             pthread_exit(0);
         }
 
-        command_analyse(&new_client);
+        printf("[INFO] : thread %ld begin his job, fd = %d\n", tid, new_client.fd);
+
+        // command_analyse(&new_client);
+
+        sleep(5);
 
         printf("[INFO] : thread %ld finish his job, fd = %d\n", tid, new_client.fd);
-
-        /* 只有客户端输入exit命令或者ctrl+c退出后 才会走到这里
-         *     1. epoll取消监听client.fd
-         *     2. close(client.fd)
-         *     3. 从管理表删除这个连接
-         */
-        epoll_del(epfd, new_client.fd);
-        close(new_client.fd);
     }
 }
 

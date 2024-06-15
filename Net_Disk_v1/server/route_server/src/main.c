@@ -5,13 +5,15 @@
 
 int exit_pipe[2];
 
-int epfd;
+HashMap *client_manage_map = NULL;
+
+time_out_queue *time_queue = NULL;
 
 void sig_func(int sig_num)
 {
     char exit_flag = 1;
     write(exit_pipe[1], &exit_flag, 1);
-    printf("INFO : capture signal SIGUSR1\n");
+    printf("[INFO] : capture signal SIGUSR1\n");
 }
 
 int main(int argc, char* argv[])
@@ -40,9 +42,16 @@ int main(int argc, char* argv[])
 
     /* -------------------- 服务器业务流程 -------------------- */
 
+    if(signal(SIGPIPE, SIG_IGN) == SIG_ERR)
+    {
+        error(-1, errno, "[INFO] : signal SIGPIPE register failed\nReason");
+    }
+
+    timer_start();
+
     int sfd = tcp_init(ROUTE_IP, ROUTE_PORT);
 
-    epfd = epoll_create1(0);
+    int epfd = epoll_create1(0);
 
     int thread_num = atoi(THREAD_NUM);
 
@@ -55,6 +64,9 @@ int main(int argc, char* argv[])
 
     sql_connect_to_database();
 
+    client_manage_map = hashmap_create();
+    time_queue = tq_create();
+
     while(1)
     {
         int ready_fd_num = epoll_wait(epfd, evs, MAX_CAPACITY, -1);
@@ -63,31 +75,62 @@ int main(int argc, char* argv[])
         {
             if(evs[i].data.fd == sfd)
             {
-                // 有新客户端连接
-                client_t new_client = {0};
-                
-                new_client.fd = tcp_accept(sfd);
-                
-                if(new_client.fd != -1)
-                {
-                    /*  客户端成功连接到服务器
-                     *    1. epoll监听客户端的fd
-                     *    2. 客户端结构放进用户管理表中 
-                     *    3. 让子线程去处理短命令的请求
-                     */
-                    epoll_add(epfd, new_client.fd);
-                    distribute_task(p_manager, new_client);
-                }
+                // 有新客户端连接 分配到堆上
+                client_t *new_client = calloc(1, sizeof(client_t));
+
+                new_client->fd = tcp_accept(sfd);
+
+                if(new_client->fd == -1)continue;
+
+                add_client(client_manage_map, time_queue, new_client);
+
+                epoll_add(epfd, new_client->fd);
             }
             else if(evs[i].data.fd == exit_pipe[0])
             {    
+                // 接收到SIGUSR1信号 准备有序退出
                 char exit_flag;
                 read(exit_pipe[1], &exit_flag, 1);
 
                 thread_pool_exit(p_manager);
 
                 sql_disconnect_to_database();
+
                 pthread_exit(0);
+            }
+            else
+            {
+                client_t *cur_client  = get_cur_client(client_manage_map, evs[i].data.fd);
+
+                update_client(client_manage_map, time_queue, cur_client);
+
+                train_t cmd_train = {0};
+                if(recv_cmd(cur_client->fd, &cmd_train))
+                {
+                    if(cmd_train.state == CMD_GETS || cmd_train.state == CMD_PUTS)
+                    {
+                        distribute_task(p_manager, *cur_client);
+                    }
+                    else
+                    {
+                        if(cmd_analyse(cur_client, cmd_train))
+                        {
+                            // 客户端exit命令
+                            printf("client fd = %d exit\n", cur_client->fd);
+                            epoll_del(epfd, cur_client->fd);
+                            close(cur_client->fd);
+                            del_client(client_manage_map, time_queue, cur_client);
+                        }
+                    }
+                }
+                else
+                {
+                    // 对端断开了
+                    printf("client fd = %d exit\n", cur_client->fd);
+                    epoll_del(epfd, cur_client->fd);
+                    close(cur_client->fd);
+                    del_client(client_manage_map, time_queue, cur_client);
+                }
             }
         }// end of search evs[i].data.fd
 

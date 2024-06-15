@@ -4,6 +4,7 @@
 #include <func.h>
 #include <mysql/mysql.h>
 #include <l8w8jwt/encode.h>
+#include <sys/time.h>
 
 #define QUEUE_SIZE 1024
 
@@ -17,6 +18,7 @@
 
 #define ROUTE_IP "192.168.7.121"
 #define ROUTE_PORT "9527"
+#define ROUTE_TOKEN_KEY "route token key"
 
 #define CLUSTER_1_IP "192.168.7.121"
 #define CLUSTER_1_PORT "9528"
@@ -25,14 +27,12 @@
 #define CLUSTER_2_PORT "9529"
 
 typedef struct{
-	int fd; 			// 客户端的fd 
-	int uid; 			// SQL : 用户的UID
-	int code; 			// SQL : 当前目录的层级
-	int pre_code; 		// SQL : 上一级目录的层级
-	time_t conn_time; 	// 上一次与服务器交互的时间
+	int  fd; 			// 客户端的fd 
+	int  uid; 			// SQL : 用户的UID
+	int  code; 			// SQL : 当前目录的层级
+	int  pre_code; 		// SQL : 上一级目录的层级
 	char name[32]; 		// SQL : 用户名称
 	char path[128]; 	// SQL : VFS路径
-	char token[256]; 	// TOKEN信息
 }client_t;
 
 typedef enum{

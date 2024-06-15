@@ -16,33 +16,28 @@ int recv_cmd(int client_fd, train_t *cmd_train)
     return 1;
 }
 
-void command_analyse(client_t *client)
+int cmd_analyse(client_t *cur_client, train_t cmd_train)
 {
-    while(1)
+
+    switch (cmd_train.state)
     {
-        train_t cmd_train = {0};
-        int ret = recv_cmd(client->fd, &cmd_train);
-
-        if(ret == 0)return;
-
-        switch (cmd_train.state)
-        {
-        case CMD_LS         :do_ls      (client, cmd_train.data_buf);   break;
-        case CMD_CD         :do_cd      (client, cmd_train.data_buf);   break;
-        case CMD_RM         :do_rm      (client, cmd_train.data_buf);   break;
-        case CMD_PWD        :do_pwd     (client, cmd_train.data_buf);   break;
-        case CMD_GETS       :do_gets    (client, cmd_train.data_buf);   break;
-        case CMD_PUTS       :do_puts    (client, cmd_train.data_buf);   break;
-        case CMD_MKDIR      :do_mkdir   (client, cmd_train.data_buf);   break;
-        case CMD_RMDIR      :do_rmdir   (client, cmd_train.data_buf);   break;
-        case CMD_TOKEN      :do_token   (client, cmd_train.data_buf);   break;
-        case CMD_LOGIN      :do_login   (client, cmd_train.data_buf);   break;
-        case CMD_REGISTER   :do_register(client, cmd_train.data_buf);   break;
-        case CMD_EXIT       :return;
-        default:
-            break;
-        }
+    case CMD_LS         :do_ls      (cur_client, cmd_train.data_buf);   break;
+    case CMD_CD         :do_cd      (cur_client, cmd_train.data_buf);   break;
+    case CMD_RM         :do_rm      (cur_client, cmd_train.data_buf);   break;
+    case CMD_PWD        :do_pwd     (cur_client, cmd_train.data_buf);   break;
+    case CMD_GETS       :do_gets    (cur_client, cmd_train.data_buf);   break;
+    case CMD_PUTS       :do_puts    (cur_client, cmd_train.data_buf);   break;
+    case CMD_MKDIR      :do_mkdir   (cur_client, cmd_train.data_buf);   break;
+    case CMD_RMDIR      :do_rmdir   (cur_client, cmd_train.data_buf);   break;
+    case CMD_TOKEN      :do_token   (cur_client, cmd_train.data_buf);   break;
+    case CMD_LOGIN      :do_login   (cur_client, cmd_train.data_buf);   break;
+    case CMD_REGISTER   :do_register(cur_client, cmd_train.data_buf);   break;
+    case CMD_EXIT       :return 1;
+    default:
+        break;
     }
+
+    return 0;
 }
 
 void do_ls(client_t *client, char *cmd)
@@ -178,7 +173,6 @@ void do_gets(client_t *client, char *cmd)
         2. 将集群地址发给客户端子线程
     */
     printf("[INFO] : %s\n", cmd);
-    char *target_file = cmd;
 }
 
 void do_puts(client_t *client, char *cmd)
@@ -277,22 +271,9 @@ void do_token(client_t *client, char *cmd)
     
 }
 
-char *generate_key(const char *user_name, const char *sql_passwd)
+int generate_token(char *token, const char *key, const client_t* client)
 {
-    // 每个用户应该独一无二 服务器根据用户名和加密密码生成这个KEY
-    int name_len = strlen(user_name);
-
-    // "user_name" + ":" + "sql_passwd" + '\0'
-    char *KEY = calloc(name_len + 88, sizeof(char));
-    strcat(KEY, user_name);
-    strcat(KEY, ":");
-    strncat(KEY, sql_passwd, 86);
-
-    return KEY;
-}
-
-int generate_token(char *token, const char *key, const char *user_name, const char *sql_passwd)
-{
+    /*
     char* jwt;
     size_t jwt_length;
 
@@ -316,7 +297,7 @@ int generate_token(char *token, const char *key, const char *user_name, const ch
     int r = l8w8jwt_encode(&params);
     if(r == L8W8JWT_SUCCESS)
     {
-        printf("[INFO] : <%s> generate token success...\n", user_name);
+        printf("[INFO] : <%s> generate token success...\n", client->name);
         strncpy(token, jwt, 256);
         l8w8jwt_free(jwt);
         
@@ -324,13 +305,16 @@ int generate_token(char *token, const char *key, const char *user_name, const ch
     }
     else
     {
-        printf("[INFO] : <%s> generate token failed...\n", user_name);
+        printf("[INFO] : <%s> generate token failed...\n", client->name);
         l8w8jwt_free(jwt);
 
         return -1;
     }
 
     return 0;
+    */
+   sprintf(token, "test token 12345");
+   return 0;
 }
 
 void do_login(client_t *client, char *cmd)
@@ -342,7 +326,7 @@ void do_login(client_t *client, char *cmd)
     printf("[INFO] : %s\n", cmd);
     char *user_name = cmd;
 
-    printf("[INFO] : user -> %s Login\n", user_name);
+    printf("[INFO] : user -> %s want Login\n", user_name);
 
     int uid = 0;
     char salt[12] = {0};
@@ -364,36 +348,29 @@ void do_login(client_t *client, char *cmd)
         // 对比密码
         if(strcmp(recv_passwd, sql_passwd) == 0)
         {
-            /*
-             *  密码正确 服务端生成一个TOKEN
-             *  发给客户端一个TOKEN(实际是每个用户独一无二的KEY)
-             *  KEY = "user_name:sql_passwd"
-             */
+            /**
+             * 1. 密码正确 服务端生成一个TOKEN
+             * 2. 发给客户端一个TOKEN {client->uid, client->code, client->pre_code, client->name}
+            */
 
-            char *KEY = generate_key(user_name, sql_passwd);
-            if(generate_token(client->token, KEY, user_name, sql_passwd) == 0)
+            char token[257] = {0};
+            if(generate_token(token, ROUTE_TOKEN_KEY, client) == 0)
             {
                 // 发送登录成功标志
                 bool login_ok = true;
                 sendn(client->fd, &login_ok, sizeof(login_ok));
-
-                // 发送TOKEN也就是给用户一个KEY
-                int key_len = strlen(KEY);
-                sendn(client->fd, &key_len, sizeof(key_len));
-                sendn(client->fd, KEY, key_len);
+        
+                // 发送TOKEN
+                int token_len = strlen(token);
+                sendn(client->fd, &token_len, sizeof(token_len));
+                sendn(client->fd, token, token_len);
                 
                 // 初始化client结构体
                 client->uid = uid;
                 client->code = 0;
                 client->pre_code = -1;
-                client->conn_time = time(NULL);
                 strncpy(client->name, user_name, strlen(user_name));
                 strcpy(client->path, "~");
-                // TODO : 将client结构体插入到客户端管理结构当中
-
-            
-                free(KEY);
-                KEY = NULL;
 
                 return ;
             }
@@ -402,18 +379,15 @@ void do_login(client_t *client, char *cmd)
                 bool login_ok = false;
                 sendn(client->fd, &login_ok, sizeof(login_ok));
 
-                free(KEY);
-                KEY = NULL;
                 return;  
             }
-            sendn(client->fd, KEY, strlen(KEY));
-
-            return;
         }
         else
         {
+            // TOKEN 生成失败
             bool login_ok = false;
             sendn(client->fd, &login_ok, sizeof(login_ok));
+
             return;
         }
     }
@@ -422,6 +396,8 @@ void do_login(client_t *client, char *cmd)
         // 用户未注册
         classify = 1;
         sendn(client->fd, &classify, sizeof(classify));
+
+        return;
     }
 }
 

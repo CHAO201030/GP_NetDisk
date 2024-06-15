@@ -5,7 +5,7 @@
 #include "trans_file.h"
 #include "sql.h"
 
-void command_analyse(client_t *client);
+int cmd_analyse(client_t *cur_client, train_t cmd_train);
 
 int recv_cmd(int client_fd, train_t *cmd_train);
 
