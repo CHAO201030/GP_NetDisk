@@ -15,3 +15,4 @@ void rmdirCommand(task_t * task)
     strcpy(t.buff, "rmdir command succeed.\n");
     sendn(task->peerfd, &t, strlen(task->data));
 }
+
