@@ -1,20 +1,16 @@
-# 多对一
 Srcs := $(wildcard *.c)
 Objs := $(patsubst %.c, %.o, $(Srcs))
 Out  := route_server
 
 CC := gcc
-CFLAGS = -Wall -g -lpthread -lmysqlclient -lcrypt -ll8w8jwt
+CFLAGS = -Wall -g -lpthread -lssl -lcrypto -lcrypt -lmysqlclient -ll8w8jwt
 
 $(Out) : $(Objs)
 	$(CC) $^ -o $@ $(CFLAGS)
-%.o: %.c algs.h
+%.o: %.c 
 	$(CC) -c $< $(CFLAGS)
 
-.PHONY: clean rebuild print
+.PHONY: clean rebuild
 clean:
 	$(RM) $(Objs) $(Out)
 rebuild: clean $(Out)
-
-print:
-	echo $(patsubst %.c, %.o, foo.c.c bar.c)

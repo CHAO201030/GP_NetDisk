@@ -1,10 +1,14 @@
 #ifndef __HEAD_H__
 #define __HEAD_H__
 
+#define OPENSSL_API_COMPAT 0x00908000L
+
 #include <func.h>
+#include <sys/time.h>
 #include <mysql/mysql.h>
 #include <l8w8jwt/encode.h>
-#include <sys/time.h>
+#include <l8w8jwt/decode.h>
+#include <openssl/md5.h>
 
 #define QUEUE_SIZE 1024
 
@@ -14,17 +18,21 @@
 
 #define BIG_FILE_SIZE ((off_t)(1<<20) * 100)
 
-#define FILE_NAME "file1.txt"
-
 #define ROUTE_IP "192.168.7.121"
 #define ROUTE_PORT "9527"
-#define ROUTE_TOKEN_KEY "route token key"
+#define ROUTE_TOKEN_KEY "route token key hope 2025 SDU to PKU"
 
 #define CLUSTER_1_IP "192.168.7.121"
 #define CLUSTER_1_PORT "9528"
 
 #define CLUSTER_2_IP "192.168.7.121"
 #define CLUSTER_2_PORT "9529"
+
+#define CLUSTER_3_IP "192.168.7.121"
+#define CLUSTER_3_PORT "9530"
+
+#define DEBUG_LOG() do{printf("%s, %d\n", __FILE__, __LINE__);}while(0)
+
 
 typedef struct{
 	int  fd; 			// 客户端的fd 
@@ -51,11 +59,23 @@ typedef enum{
     CMD_REGISTER	// 注册
 }CMD_TYPE;
 
+typedef enum{
+    NORMAL_RETURN,
+    CLIENT_EXIT,
+    TOKEN_FAILED
+}cmd_analyse_exit_value;
+
 typedef struct{
 	int data_len;				// data_buf的长度
 	CMD_TYPE state;				// 当前传输的信息类型
 	char data_buf[BUFFER_SIZE];	// 传输内容
 }train_t;
+
+typedef struct{
+    int fd;                 // 对端的 fd
+    CMD_TYPE state;         // 任务的类型 gets  or  puts
+    char task_info[256];    // 任务信息 gets 10001  or  puts 10042
+}task_t;
 
 typedef struct{
     int front;                          // 队头 
@@ -64,7 +84,7 @@ typedef struct{
     pthread_mutex_t mutex;              // 队列锁
     pthread_cond_t not_empty;           // 非空条件变量
     pthread_cond_t not_full;            // 非满条件变量
-    client_t client_table[QUEUE_SIZE];  // 循环队列
+    task_t task_queue[QUEUE_SIZE];      // 循环队列
 }block_queue_t;
 
 typedef struct{

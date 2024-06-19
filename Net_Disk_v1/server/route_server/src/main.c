@@ -109,14 +109,40 @@ int main(int argc, char* argv[])
                 {
                     if(cmd_train.state == CMD_GETS || cmd_train.state == CMD_PUTS)
                     {
-                        distribute_task(p_manager, *cur_client);
+                        // 长命令
+                        
+                        /**
+                         * 1. 构造task_t
+                         * 2. 子线程 该干活啦! 你不干有的是线程干!
+                         * 3. 取消对客户端子线程的sfd的监听
+                         * 4. 由服务器子线程将客户端子线程踢出服务器 直接封号10年
+                        */
+                        epoll_del(epfd, cur_client->fd);
+
+                        task_t cur_task = {0};
+                        cur_task.fd = cur_client->fd;
+                        cur_task.state = cmd_train.state;
+                        strncpy(cur_task.task_info, cmd_train.data_buf, sizeof(cur_task.task_info));
+                        
+                        distribute_task(p_manager, cur_task);
+                        // del_client(client_manage_map, time_queue, cur_client);
                     }
                     else
                     {
-                        if(cmd_analyse(cur_client, cmd_train))
+                        // 短命令
+
+                        int ret = cmd_analyse(cur_client, cmd_train);
+                        if(ret == CLIENT_EXIT)
                         {
                             // 客户端exit命令
-                            printf("client fd = %d exit\n", cur_client->fd);
+                            printf("[INFO] : user <%s> exit\n", cur_client->name);
+                            epoll_del(epfd, cur_client->fd);
+                            close(cur_client->fd);
+                            del_client(client_manage_map, time_queue, cur_client);
+                        }
+                        else if(ret == TOKEN_FAILED)
+                        {
+                            // 客户端子线程TOKEN验证失败
                             epoll_del(epfd, cur_client->fd);
                             close(cur_client->fd);
                             del_client(client_manage_map, time_queue, cur_client);
