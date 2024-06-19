@@ -5,5 +5,6 @@
 #include "net.h"
 #include "trans_file.h"
 #include "task.h"
+#include "md5.h"
 
 #endif

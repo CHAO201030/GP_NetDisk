@@ -1,7 +1,12 @@
 #include "../include/task.h"
+#include "../include/net.h"
+#include "../include/thread_func.h"
 
 extern char cur_path[256];
-extern char *token_key;
+
+extern char *TOKEN;
+
+extern pthread_t pthid;
 
 void start_menu(void)
 {
@@ -60,11 +65,41 @@ void command_analyse(train_t* cmd_train, int route_sfd)
     }
     else if(strncmp(cmd_train->data_buf, "gets ", 5) == 0)
     {
-        do_gets(cmd_train);
+        /**
+         * 1. 创建子线程 让子线程connect服务器
+         * 2. 子线程发送token验证
+         * 3. 子线程发送gets命令火车
+         * 4. 子线程收取文件服务器地址
+         * 5. 子线程后台下载文件
+        */
+
+        thread_args pth_args = {0};
+        strncpy(pth_args.cur_cmd, cmd_train->data_buf, cmd_train->data_len);
+        pth_args.state = CMD_GETS;
+
+        pthread_create(&pthid, NULL, pth_func, (void *)&pth_args);   
+        
+        printf("%s", cur_path);
+        fflush(stdout);
     }
     else if(strncmp(cmd_train->data_buf, "puts ", 5) == 0)
     {
-        do_puts();
+        /**
+         * 1. 创建子线程 让子线程connect服务器
+         * 2. 子线程发送token验证
+         * 3. 子线程发送puts命令火车
+         * 4. 子线程收取文件服务器地址
+         * 5. 子线程后台上传文件
+        */
+
+        thread_args pth_args = {0};
+        strncpy(pth_args.cur_cmd, cmd_train->data_buf, cmd_train->data_len);
+        pth_args.state = CMD_PUTS;
+
+        pthread_create(&pthid, NULL, pth_func, (void *)&pth_args);   
+
+        printf("%s", cur_path);
+        fflush(stdout);
     }
     else if(strncmp(cmd_train->data_buf, "exit", 4) == 0)
     {
@@ -73,7 +108,7 @@ void command_analyse(train_t* cmd_train, int route_sfd)
     }
     else
     {
-        printf("INFO : ERROR command reinput...\n");
+        printf("[INFO] : ERROR command reinput...\n");
         printf("%s", cur_path);
         fflush(stdout);
     }
@@ -88,7 +123,7 @@ int recv_server_msg(int route_sfd)
 
     if(ret == 0)
     {
-        printf("[INFO] : Route Server shut down client will cose after GETS/PUTS finish\n");
+        printf("\n[INFO] : Route Server shut down client will cose after GETS/PUTS finish\n");
         return 0;
     }
 
@@ -101,261 +136,11 @@ int recv_server_msg(int route_sfd)
     case CMD_CD         :do_cd(server_msg);         break;
     case CMD_RM         :do_rm(server_msg);         break;
     case CMD_PWD        :do_pwd(server_msg);        break;
-    // case CMD_GETS       :do_gets(server_msg);       break;
-    // case CMD_PUTS       :do_puts(server_msg);       break;
     case CMD_MKDIR      :do_mkdir(server_msg);      break;
     case CMD_RMDIR      :do_rmdir(server_msg);      break;
-    case CMD_TOKEN      :do_token(server_msg);      break;
     default:
         break;
     }
 
     return 1;
-}
-
-void do_ls(train_t server_msg)
-{
-    // printf("[INFO] : client recv ls result\n");
-    printf("%s\n", server_msg.data_buf);
-
-    printf("%s", cur_path);
-    fflush(stdout);
-}
-
-void do_cd(train_t server_msg)
-{
-    printf("[INFO] : client do cd\n");
-    printf("recv path = %s\n", server_msg.data_buf);
-    
-    if(strcmp(server_msg.data_buf, "ERROR") == 0)
-    {
-        printf("cd: No such directory\n");
-        printf("%s", cur_path);
-        fflush(stdout);
-        return;
-    }
-
-    strtok(cur_path, ":");
-    int path_len = strlen(cur_path);
-
-    cur_path[path_len + 1] = '\0';
-    cur_path[path_len] = ':';
-
-    strcat(cur_path, "\033[34m");
-    strcat(cur_path, server_msg.data_buf);
-    strcat(cur_path, "$\033[0m ");
-
-    printf("%s", cur_path);
-    fflush(stdout);
-}
-
-void do_rm(train_t server_msg)
-{
-    printf("[INFO] : client do rm\n");
-    printf("%s\n", server_msg.data_buf);
-    printf("%s", cur_path);
-    fflush(stdout);
-}
-
-void do_pwd(train_t server_msg)
-{
-    // printf("[INFO] : client do pwd\n");
-    printf("%s\n", server_msg.data_buf);
-
-    printf("%s", cur_path);
-    fflush(stdout);
-}
-
-void *pth_func(void *args)
-{
-
-
-}
-
-void do_gets(train_t* cmd_train)
-{
-    // 启动子线程 发送KEY给客户端
-
-}
-
-void do_puts()
-{
-
-}
-
-void do_mkdir(train_t server_msg)
-{
-    printf("[INFO] : client do mkdir\n");
-
-    if(strcmp(server_msg.data_buf, "ERROR") == 0)
-    {
-        printf("[INFO] : mkdir failed\n");
-    }
-    else
-    {
-        // do nothing
-    }
-    printf("%s", cur_path);
-    fflush(stdout);
-}
-
-void do_rmdir(train_t server_msg)
-{
-    printf("[INFO] : client do rmdir\n");
-    printf("%s\n", server_msg.data_buf);
-    printf("%s", cur_path);
-    fflush(stdout);
-}
-
-void do_token(train_t server_msg)
-{
-    printf("[INFO] : client recv token\n");
-
-}
-
-void do_login(int route_sfd)
-{
-    printf("[INFO] : client do login\n");
-    char user_name[32] = {0};
-    char user_passwd[64] = {0};
-
-    // 输入用户名
-    printf("[INFO] : Input user name: ");
-    fflush(stdout);
-    int user_name_len = read(STDIN_FILENO, user_name, sizeof(user_name));
-    user_name[--user_name_len] = '\0';
-
-    // 输入密码
-    printf("[INFO] : Input password : ");
-    fflush(stdout);
-    int user_passwd_len = read(STDIN_FILENO, user_passwd, sizeof(user_name));
-    user_passwd[--user_passwd_len] = '\0';
-
-    // 将用户名发送给服务器
-    train_t login_info = {0};
-
-    login_info.data_len = user_name_len;
-    login_info.state = CMD_LOGIN;
-    strncpy(login_info.data_buf, user_name, login_info.data_len);
-    
-    send_cmd(&login_info, CMD_LOGIN, route_sfd);
-
-    int classify = -1;
-    recvn(route_sfd, &classify, sizeof(classify));
-
-    switch (classify)
-    {
-    case 0:
-    {
-        // 用户名存在
-        
-        // 获取盐值
-        char salt[12] = {0};
-        recvn(route_sfd, salt, sizeof(salt));
-
-        // 根据盐值获取加密密文 发给服务器
-        char *encrypted_passwd = crypt(user_passwd, salt);
-        
-        char *p = strtok(encrypted_passwd, "$");
-        p = strtok(NULL, "$");
-        p = strtok(NULL, "$");
-
-        sendn(route_sfd, p, strlen(p));
-
-        bool login_ok = false;
-        recvn(route_sfd, &login_ok, sizeof(login_ok));
-
-        if(login_ok)
-        {
-            // 密码正确
-            printf("[INFO] : Login success...\n");
-
-            // 接收服务器发送的TOKEN KEY
-            int key_len = 0;
-            recvn(route_sfd, &key_len, sizeof(key_len));
-            token_key = calloc(key_len + 1, sizeof(char));
-            recvn(route_sfd, token_key, key_len);
-
-            sprintf(cur_path, "\033[31m%s\033[36m@NetDisk:\033[34m~$\033[0m ", user_name);
-            printf("%s", cur_path);
-            fflush(stdout);
-            return;
-        }
-        else
-        {
-            // 密码不正确
-            printf("[INFO] : password error...\n");
-            exit(-1);
-        }
-    }
-    case 1:
-    {
-        // 用户名不存在
-        printf("[INFO] : user not exist...\n");
-        exit(-1);
-    }
-    default:
-    {
-        printf("[INFO] : unknow error...\n");
-        exit(-1);
-    }
-    }
-}
-
-void do_register(int route_sfd)
-{
-    printf("[INFO] : client do register\n");
-    char user_name[32] = {0};
-    char user_passwd[64] = {0};
-
-    // 输入用户名
-    printf("[INFO] : Input user name: ");
-    fflush(stdout);
-    int user_name_len = read(STDIN_FILENO, user_name, sizeof(user_name));
-    user_name[--user_name_len] = '\0';
-    
-    // 输入密码
-    printf("[INFO] : Input password : ");
-    fflush(stdout);
-    int user_passwd_len = read(STDIN_FILENO, user_passwd, sizeof(user_name));
-    user_passwd[--user_passwd_len] = '\0';
-
-    // 将用户名发送给服务器
-    train_t login_info = {0};
-
-    login_info.data_len = user_name_len;
-    login_info.state = CMD_REGISTER;
-    strncpy(login_info.data_buf, user_name, login_info.data_len);
-    
-    send_cmd(&login_info, CMD_REGISTER, route_sfd);
-    
-    // 接收是否存在
-    int is_exist = -1;
-    recvn(route_sfd, &is_exist, sizeof(is_exist));
-    if(is_exist == 0)
-    {
-        // 注册流程 接收salt
-        char salt[12] = {0};
-        recvn(route_sfd, salt, sizeof(salt));
-
-        // 根据salt生成密文密码发送给服务器
-        char *encrypted_passwd = crypt(user_passwd, salt);
-        
-        char *p = strtok(encrypted_passwd, "$");
-        p = strtok(NULL, "$");
-        p = strtok(NULL, "$");
-
-        sendn(route_sfd, p, strlen(p));
-        
-        int register_success = 0;
-        recvn(route_sfd, &register_success, sizeof(register_success));
-        printf("[INFO] : Register %s success...\n", user_name);
-        return;
-    }
-    else
-    {
-        // 用户名已存在
-        printf("[INFO] : Register false please restart client...\n");
-        exit(-1);
-    }
 }

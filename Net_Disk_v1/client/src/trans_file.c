@@ -44,103 +44,29 @@ off_t get_file_size(int fd)
     return file_stat.st_size;
 }
 
-void send_file(int sfd)
+int recv_big_file(int sfd, int fd, int offset, int part_size)
 {
-    int fd = open(FILE_NAME, O_RDWR);
-    if(fd == -1)
-    {
-        error(0, errno, "open %s failed", FILE_NAME);
-    }
-
-    // 发送文件名
-    train_t t = {0};
-    t.data_len = strlen(FILE_NAME);
-    t.state = CMD_PUTS; // 客户端上传文件PUTS
-    strncpy(t.data_buf, FILE_NAME, t.data_len);
-
-    sendn(sfd, &t.data_len, sizeof(t.data_len));
-    sendn(sfd, &t.state, sizeof(t.state));
-    sendn(sfd, t.data_buf, t.data_len);
-    
-    off_t file_size = get_file_size(fd);
-
-    // 发送文件大小
-    bzero(&t, sizeof(t));
-    
-    t.data_len = file_size;
-    t.state = CMD_PUTS;
-    
-    sendn(sfd, &t.data_len, sizeof(t.data_len));
-    sendn(sfd, &t.state, sizeof(t.state));
-    
-    // 发送文件内容
-    off_t send_size = 0;
-    off_t cur_size = 0;
-        
-    while(send_size < file_size)
-    {
-        if(file_size - send_size < MMAP_SIZE)
-        {
-            cur_size = file_size - send_size;
-        }
-        else
-        {
-            cur_size = MMAP_SIZE;
-        }
-
-        void *mm_addr = mmap(NULL, cur_size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, send_size);
-
-        sendn(sfd, mm_addr, cur_size);
-
-        munmap(mm_addr, cur_size);
-
-        send_size += cur_size;
-    }
-
-    close(fd);
-}
-
-void recv_file(int sfd)
-{
-    // 接收文件名
-    train_t t = {0};
-    recvn(sfd, &t.data_len, sizeof(t.data_len));
-    recvn(sfd, &t.state, sizeof(t.state));
-    recvn(sfd, t.data_buf, t.data_len);
-
-    // 创建文件
-    int fd = open(t.data_buf, O_RDWR|O_CREAT, 0666);
-    if(fd == -1)
-    {
-        error(-1, errno, "create %s failed", t.data_buf);
-    }
-
-    // 接收文件大小
-    bzero(&t, sizeof(t));
-    recvn(sfd, &t.data_len, sizeof(t.data_len));
-    recvn(sfd, &t.state, sizeof(t.state));
-
-    off_t file_size = t.data_len;
-
-    // 改变文件大小
-    ftruncate(fd, file_size);
-
-    // 接收文件内容
     off_t recv_size = 0;
     off_t cur_size = 0;
-        
-    while(recv_size < file_size)
+
+    while(recv_size < part_size)
     {
-        if(file_size - recv_size < MMAP_SIZE)
+        if(part_size - recv_size < MMAP_SIZE)
         {
-            cur_size = file_size - recv_size;
+            cur_size = part_size - recv_size;
         }
         else
         {
             cur_size = MMAP_SIZE;
         }
 
-        void *mm_addr = mmap(NULL, cur_size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, recv_size);
+        // 每次映射 cur_size 个字节 从 fd 的 recv_size + offset 位置开始
+        void *mm_addr = mmap(NULL, cur_size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, offset + recv_size);
+        if(mm_addr == MAP_FAILED)
+        {
+            perror("mmap");
+            exit(EXIT_FAILURE);
+        }
 
         recvn(sfd, mm_addr, cur_size);
 
@@ -149,19 +75,5 @@ void recv_file(int sfd)
         recv_size += cur_size;
     }
 
-    close(fd);
-}
-
-void recv_cluster_info(int sfd, char *ip, char *port)
-{
-    int ip_len = 0;
-    int port_len = 0;
-
-    // 接收集群服务器的IP
-    recvn(sfd, &ip_len, sizeof(ip_len));
-    recvn(sfd, ip, ip_len);
-
-    // 接收集群服务器的PORT
-    recvn(sfd, &port_len, sizeof(port_len));
-    recvn(sfd, port, port_len);
+    return recv_size;
 }
