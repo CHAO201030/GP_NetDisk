@@ -78,7 +78,7 @@ void do_login(client_t *client, char *cmd)
 
         // 收取密文密码
         recvn(client->fd, recv_passwd, sizeof(recv_passwd));
-    printf("recv %s\n", recv_passwd);
+
         // 对比密码
         if(strcmp(recv_passwd, sql_passwd) == 0)
         {

@@ -1,3 +1,16 @@
+/**
+ * @file main.c
+ * @author CHAO https://github.com/CHAO201030
+ *         PENG https://github.com/fanyukino
+ * 
+ * @brief Net_Disk
+ * @version 5.0
+ * @date 2024-06-19
+ * 
+ * @copyright Copyright (c) 2024 Wangdao programmer training camp CPP 58th
+ * 
+ */
+
 #include "../include/net_disk.h"
 
 #define THREAD_NUM "5"
@@ -125,7 +138,6 @@ int main(int argc, char* argv[])
                         strncpy(cur_task.task_info, cmd_train.data_buf, sizeof(cur_task.task_info));
                         
                         distribute_task(p_manager, cur_task);
-                        // del_client(client_manage_map, time_queue, cur_client);
                     }
                     else
                     {
