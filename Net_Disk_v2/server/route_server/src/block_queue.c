@@ -26,7 +26,7 @@ block_queue_t* block_queue_create(void)
     return q;
 }
 
-client_t block_queue_pop(block_queue_t* q)
+task_t block_queue_pop(block_queue_t* q)
 {
     pthread_mutex_lock(&q->mutex);
     
@@ -35,7 +35,7 @@ client_t block_queue_pop(block_queue_t* q)
         pthread_cond_wait(&q->not_empty, &q->mutex);
     }
 
-    client_t val = q->client_table[q->front];
+    task_t cur_task = q->task_queue[q->front];
     q->front = (q->front + 1) % QUEUE_SIZE;
     q->size--;
 
@@ -43,10 +43,10 @@ client_t block_queue_pop(block_queue_t* q)
 
     pthread_mutex_unlock(&q->mutex);
 
-    return val;
+    return cur_task;
 }
 
-client_t block_queue_peek(block_queue_t* q)
+task_t block_queue_peek(block_queue_t* q)
 {
     pthread_mutex_lock(&q->mutex);
     
@@ -55,14 +55,14 @@ client_t block_queue_peek(block_queue_t* q)
         pthread_cond_wait(&q->not_empty, &q->mutex);
     }
 
-    client_t val = q->client_table[q->front];
+    task_t cur_task = q->task_queue[q->front];
 
     pthread_mutex_unlock(&q->mutex);
 
-    return val;    
+    return cur_task;    
 }
 
-void block_queue_push(block_queue_t* q, client_t new_client)
+void block_queue_push(block_queue_t* q, task_t new_task)
 {
     pthread_mutex_lock(&q->mutex);
     
@@ -71,7 +71,7 @@ void block_queue_push(block_queue_t* q, client_t new_client)
         pthread_cond_wait(&q->not_full, &q->mutex);
     }
 
-    q->client_table[q->rear] = new_client;
+    q->task_queue[q->rear] = new_task;
     q->rear = (q->rear + 1) % QUEUE_SIZE;
     q->size++;
 

@@ -1,6 +1,7 @@
 #include "../include/net_disk.h"
 
-extern int epfd;
+extern HashMap *client_manage_map;
+extern time_out_queue *time_queue;
 
 void* pth_func(void *args)
 {
@@ -15,25 +16,50 @@ void* pth_func(void *args)
     {
         printf("[INFO] : thread %ld waiting for job\n", tid);
 
-        client_t new_client = block_queue_pop(p_manager->block_queue);
+        task_t new_task = block_queue_pop(p_manager->block_queue);
         
-        if(new_client.fd == -1)
+        if(new_task.fd == -1)
         {
-            printf("[INFO] : thread %ld will exit...\n", tid);
+            //printf("[INFO] : thread %ld will exit...\n", tid);
             pthread_exit(0);
         }
 
-        command_analyse(&new_client);
+        printf("[INFO] : thread %ld begin his job, fd = %d\n", tid, new_task.fd);
 
-        printf("[INFO] : thread %ld finish his job, fd = %d\n", tid, new_client.fd);
+        if(new_task.state == CMD_GETS)
+        {
+            client_t *client_child_thread = get_cur_client(client_manage_map, new_task.fd);
 
-        /* 只有客户端输入exit命令或者ctrl+c退出后 才会走到这里
-         *     1. epoll取消监听client.fd
-         *     2. close(client.fd)
-         *     3. 从管理表删除这个连接
-         */
-        epoll_del(epfd, new_client.fd);
-        close(new_client.fd);
+            printf("server threads task : %s\n", new_task.task_info);
+
+            do_gets(client_child_thread, new_task.task_info);
+
+            del_client(client_manage_map, time_queue, client_child_thread);
+
+            close(new_task.fd);
+
+            printf("server thread do_gets finished\n");
+        }
+        else if(new_task.state == CMD_PUTS)
+        {
+            client_t *client_child_thread = get_cur_client(client_manage_map, new_task.fd);
+
+            printf("server threads task : %s\n", new_task.task_info);
+
+            do_puts(client_child_thread, new_task.task_info);
+
+            del_client(client_manage_map, time_queue, client_child_thread);
+
+            close(new_task.fd);
+
+            printf("server thread do_puts finished\n");
+        }
+        else
+        {
+            printf("[INFO] : Error Thread task...\n");
+        }
+
+        printf("[INFO] : thread %ld finish his job, fd = %d\n", tid, new_task.fd);
     }
 }
 
@@ -69,7 +95,7 @@ void thread_pool_exit(thread_pool_t *p_manager)
 
     for(int i = 0; i < p_manager->thread_num; i++)
     {
-        client_t exit_flag = {0};
+        task_t exit_flag = {0};
         exit_flag.fd = -1;
         block_queue_push(p_manager->block_queue, exit_flag);
     }
@@ -82,7 +108,7 @@ void thread_pool_exit(thread_pool_t *p_manager)
     printf("[INFO] : thread_pool exit success...\n");
 }
 
-void distribute_task(thread_pool_t *p_manager, client_t new_client)
+void distribute_task(thread_pool_t *p_manager, task_t new_task)
 {
-    block_queue_push(p_manager->block_queue, new_client);
+    block_queue_push(p_manager->block_queue, new_task);
 }

@@ -1,7 +1,6 @@
 #include "../include/sql.h"
 
 /*          MYSQL 初始化          */
-// 下面的 IP 用户 密码 改为自己的
 MYSQL *sql_conn = NULL;
 const char *sql_server = "192.168.7.121";
 const char *sql_user = "root";
@@ -24,54 +23,4 @@ int sql_disconnect_to_database()
 {
     mysql_close(sql_conn);
     return 0;
-}
-
-int sql_do_register()
-{
-
-}
-
-int sql_do_login()
-{
-
-}
-
-int sql_do_ls()
-{
-
-}
-
-int sql_get_code()
-{
-
-}
-
-int sql_do_cd()
-{
-
-}
-
-int sql_do_rm()
-{
-
-}
-
-int sql_do_gets()
-{
-
-}
-
-int sql_do_puts()
-{
-
-}
-
-int sql_do_mkdir()
-{
- 
-}
-
-int sql_do_rmdir()
-{
-
 }

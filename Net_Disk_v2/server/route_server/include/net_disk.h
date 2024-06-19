@@ -8,5 +8,6 @@
 #include "trans_file.h"
 #include "route_task.h"
 #include "sql.h"
+#include "client_manager.h"
 
 #endif

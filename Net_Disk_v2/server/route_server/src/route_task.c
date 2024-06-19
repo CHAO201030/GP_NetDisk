@@ -1,4 +1,7 @@
 #include "../include/route_task.h"
+#include "../include/client_manager.h"
+
+extern HashMap *client_manage_map;
 
 int recv_cmd(int client_fd, train_t *cmd_train)
 {
@@ -16,109 +19,31 @@ int recv_cmd(int client_fd, train_t *cmd_train)
     return 1;
 }
 
-void command_analyse(client_t *client)
+int cmd_analyse(client_t *cur_client, train_t cmd_train)
 {
-    while(1)
+
+    switch (cmd_train.state)
     {
-        train_t cmd_train = {0};
-        int ret = recv_cmd(client->fd, &cmd_train);
-
-        if(ret == 0)return;
-
-        switch (cmd_train.state)
-        {
-        case CMD_LS         :do_ls      (client, cmd_train.data_buf);   break;
-        case CMD_CD         :do_cd      (client, cmd_train.data_buf);   break;
-        case CMD_RM         :do_rm      (client, cmd_train.data_buf);   break;
-        case CMD_PWD        :do_pwd     (client, cmd_train.data_buf);   break;
-        case CMD_GETS       :do_gets    (client, cmd_train.data_buf);   break;
-        case CMD_PUTS       :do_puts    (client, cmd_train.data_buf);   break;
-        case CMD_MKDIR      :do_mkdir   (client, cmd_train.data_buf);   break;
-        case CMD_RMDIR      :do_rmdir   (client, cmd_train.data_buf);   break;
-        case CMD_TOKEN      :do_token   (client, cmd_train.data_buf);   break;
-        case CMD_LOGIN      :do_login   (client, cmd_train.data_buf);   break;
-        case CMD_REGISTER   :do_register(client, cmd_train.data_buf);   break;
-        case CMD_EXIT       :return;
-        default:
-            break;
-        }
-    }
-}
-
-void do_ls(client_t *client, char *cmd)
-{
-
-}
-
-void do_cd(client_t *client, char *cmd)
-{
- 
-}
-
-void do_rm(client_t *client, char *cmd)
-{
-
-}
-
-void do_pwd(client_t *client, char *cmd)
-{
-
-}
-
-void do_gets(client_t *client, char *cmd)
-{
-
-}
-
-void do_puts(client_t *client, char *cmd)
-{
-
-
-}
-
-void do_mkdir(client_t *client, char *cmd)
-{
-
-}
-
-void do_rmdir(client_t *client, char *cmd)
-{
-
-}
-
-void do_token(client_t *client, char *cmd)
-{
-
-}
-
-void do_login(client_t *client, char *cmd)
-{
- 
-}
-
-void generate_salt(char *salt)
-{
-    // 用户注册使用
-    char str[9] = {0};
-    int i, flag;
-    srand(time(NULL));
-    for(i = 0; i < 8; i++)
+    case CMD_LS         :do_ls      (cur_client, cmd_train.data_buf);   break;
+    case CMD_CD         :do_cd      (cur_client, cmd_train.data_buf);   break;
+    case CMD_RM         :do_rm      (cur_client, cmd_train.data_buf);   break;
+    case CMD_PWD        :do_pwd     (cur_client, cmd_train.data_buf);   break;
+    case CMD_MKDIR      :do_mkdir   (cur_client, cmd_train.data_buf);   break;
+    case CMD_RMDIR      :do_rmdir   (cur_client, cmd_train.data_buf);   break;
+    case CMD_LOGIN      :do_login   (cur_client, cmd_train.data_buf);   break;
+    case CMD_REGISTER   :do_register(cur_client, cmd_train.data_buf);   break;
+    case CMD_TOKEN      :
     {
-        flag = rand()%3;
-        switch(flag)
+        if(do_token(cur_client, cmd_train.data_buf) == -1)
         {
-        case 0:str[i] = rand() % 26 + 'a'; break;
-        case 1:str[i] = rand() % 26 + 'A'; break;
-        case 2:str[i] = rand() % 10 + '0'; break;
-
+            return TOKEN_FAILED;
         }
+        break;
     }
-    strcat(salt, "$6$");
-    strcat(salt, str);
-    strcat(salt, "$");
-}
+    case CMD_EXIT       :return CLIENT_EXIT;
+    default:
+        break;
+    }
 
-void do_register(client_t *client, char *cmd)
-{
-
+    return NORMAL_RETURN;
 }

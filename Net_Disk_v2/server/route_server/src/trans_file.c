@@ -34,27 +34,7 @@ int recvn(int sfd, void *buf, int buf_len)
     return finish_recv;
 }
 
-void send_cluster_info(int sfd, const char *ip, const char *port)
+void send_file_server_info(int sfd, const char *ip, const char *port)
 {
-    train_t t = {0};
 
-    // 发送集群服务器的IP
-    t.data_len = strlen(ip);
-    t.state = CMD_MSG;
-    strncpy(t.data_buf, ip, t.data_len);
-    
-    sendn(sfd, &t.data_len, sizeof(t.data_len));
-    sendn(sfd, &t.state, sizeof(t.state));
-    sendn(sfd, t.data_buf, t.data_len);
-
-    // 发送集群服务器的PORT
-    bzero(&t, sizeof(t));
-
-    t.data_len = strlen(port);
-    t.state = CMD_MSG;
-    strncpy(t.data_buf, port, t.data_len);
-
-    sendn(sfd, &t.data_len, sizeof(t.data_len));
-    sendn(sfd, &t.state, sizeof(t.state));
-    sendn(sfd, t.data_buf, t.data_len);
 }

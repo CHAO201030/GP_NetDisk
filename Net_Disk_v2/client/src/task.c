@@ -1,7 +1,12 @@
 #include "../include/task.h"
+#include "../include/net.h"
+#include "../include/thread_func.h"
 
 extern char cur_path[256];
-extern char *token_key;
+
+extern char *TOKEN;
+
+extern pthread_t pthid;
 
 void start_menu(void)
 {
@@ -60,11 +65,11 @@ void command_analyse(train_t* cmd_train, int route_sfd)
     }
     else if(strncmp(cmd_train->data_buf, "gets ", 5) == 0)
     {
-        do_gets(cmd_train);
+        // TODO
     }
     else if(strncmp(cmd_train->data_buf, "puts ", 5) == 0)
     {
-        do_puts();
+        // TODO
     }
     else if(strncmp(cmd_train->data_buf, "exit", 4) == 0)
     {
@@ -73,7 +78,7 @@ void command_analyse(train_t* cmd_train, int route_sfd)
     }
     else
     {
-        printf("INFO : ERROR command reinput...\n");
+        printf("[INFO] : ERROR command reinput...\n");
         printf("%s", cur_path);
         fflush(stdout);
     }
@@ -88,7 +93,7 @@ int recv_server_msg(int route_sfd)
 
     if(ret == 0)
     {
-        printf("[INFO] : Route Server shut down client will cose after GETS/PUTS finish\n");
+        printf("\n[INFO] : Route Server shut down client will cose after GETS/PUTS finish\n");
         return 0;
     }
 
@@ -101,76 +106,11 @@ int recv_server_msg(int route_sfd)
     case CMD_CD         :do_cd(server_msg);         break;
     case CMD_RM         :do_rm(server_msg);         break;
     case CMD_PWD        :do_pwd(server_msg);        break;
-    // case CMD_GETS       :do_gets(server_msg);       break;
-    // case CMD_PUTS       :do_puts(server_msg);       break;
     case CMD_MKDIR      :do_mkdir(server_msg);      break;
     case CMD_RMDIR      :do_rmdir(server_msg);      break;
-    case CMD_TOKEN      :do_token(server_msg);      break;
     default:
         break;
     }
 
     return 1;
-}
-
-void do_ls(train_t server_msg)
-{
-
-}
-
-void do_cd(train_t server_msg)
-{
-
-}
-
-void do_rm(train_t server_msg)
-{
-
-}
-
-void do_pwd(train_t server_msg)
-{
-
-}
-
-void *pth_func(void *args)
-{
-
-
-}
-
-void do_gets(train_t* cmd_train)
-{
-
-
-}
-
-void do_puts()
-{
-
-}
-
-void do_mkdir(train_t server_msg)
-{
-
-}
-
-void do_rmdir(train_t server_msg)
-{
-
-}
-
-void do_token(train_t server_msg)
-{
-
-}
-
-void do_login(int route_sfd)
-{
-
-}
-
-void do_register(int route_sfd)
-{
-   
 }
