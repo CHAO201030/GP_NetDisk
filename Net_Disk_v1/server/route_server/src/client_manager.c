@@ -145,6 +145,7 @@ void hashmap_delete(HashMap* hash_map, K client)
                 pPre->next = pCur->next;
             }
 
+            free(pCur->client);
             free(pCur);
             hash_map->size--;
 
@@ -277,28 +278,28 @@ int add_client(HashMap *hash_map, time_out_queue *tq, client_t* new_client)
     return 0;
 }
 
-int del_client(HashMap *hash_map, time_out_queue *tq, client_t* new_client)
+int del_client(HashMap *hash_map, time_out_queue *tq, client_t* cur_client)
 {
     /**
      * 1. 获得 client_fd 的 slot_index
      * 2. 将 client 从哈希表中删除
      * 2. 根据 slot_index 将 client_fd 从超时队列中删除
     */
-    V slot_idx = hashmap_get(hash_map, new_client);
-    hashmap_delete(hash_map, new_client);
-    tq_pop(tq, slot_idx, new_client->fd);
+    V slot_idx = hashmap_get(hash_map, cur_client);
+    hashmap_delete(hash_map, cur_client);
+    tq_pop(tq, slot_idx, cur_client->fd);
 
     return 0;
 }
 
-int update_client(HashMap *hash_map, time_out_queue *tq, client_t* new_client)
+int update_client(HashMap *hash_map, time_out_queue *tq, client_t* cur_client)
 {
     /**
      * 1. 更新 client_fd 在哈希表中的 {client_fd:slot_idx}
      * 2. 更新 client_fd 在超时队列中的位置到 slot[cur_index]
     */
-    V old_index = hashmap_put(hash_map, new_client, tq->cur_index);
-    tq_update_conn(tq, old_index, new_client->fd);
+    V old_index = hashmap_put(hash_map, cur_client, tq->cur_index);
+    tq_update_conn(tq, old_index, cur_client->fd);
     // printf("Now client in slot[%d]\n", tq->cur_index);
     return 0;
 }
@@ -317,6 +318,8 @@ int clean_client(HashMap *hash_map, time_out_queue *tq)
 
         if(cur_client == NULL)return -1;
 
+        printf("[INFO] : user <%s> timeout\n", cur_client->name);
+        
         hashmap_delete(hash_map, cur_client);
 
         close(cur_fd);
@@ -370,28 +373,3 @@ void timer_start()
         error(1, errno, "setitimer");
     }
 }
-
-/* ----------------------------- TEST UNIT ------------------------------
-
-int main(void)
-{
-    HashMap *hash_map = hashmap_create();
-    time_out_queue *tq = tq_create();
-
-    client_t clients[3] = {0};
-    clients[0].fd = 0;
-    clients[1].fd = 1;
-    clients[2].fd = 2;
-
-    add_client(hash_map, tq, &clients[0]);
-    add_client(hash_map, tq, &clients[1]);
-    del_client(hash_map, tq, &clients[0]);
-    add_client(hash_map, tq, &clients[2]);
-    tq_update_timer(tq);
-    update_client(hash_map, tq, &clients[1]);
-    tq->cur_index = 0;
-
-    clean_client(hash_map, tq);
-    client_t *cur_client = get_cur_client(hash_map, 2);
-}
-*/

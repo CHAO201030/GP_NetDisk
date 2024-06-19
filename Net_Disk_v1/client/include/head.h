@@ -3,24 +3,15 @@
 
 #include <func.h>
 
+#define ROUTE_IP "192.168.7.121"
+#define ROUTE_PORT "9527"
+
 #define BUFFER_SIZE 1024
 
 #define MMAP_SIZE 4096
 
 #define BIG_FILE_SIZE ((off_t)(1<<20) * 100)
 
-#define FILE_NAME "file1.txt"
-
-typedef struct{
-	int fd; 			// 客户端的fd 
-	int uid; 			// SQL : 用户的UID
-	int code; 			// SQL : 当前目录的层级
-	int pre_code; 		// SQL : 上一级目录的层级
-	time_t conn_time; 	// 上一次与服务器交互的时间
-	char name[32]; 		// SQL : 用户名称
-	char path[128]; 	// SQL : VFS路径
-	char token[128]; 	// token信息
-}client_t;
 
 typedef enum{
     CMD_MSG,		// 表示传输消息
@@ -43,5 +34,17 @@ typedef struct{
 	CMD_TYPE state;				// 当前传输的信息类型
 	char data_buf[BUFFER_SIZE];	// 传输内容
 }train_t;
+
+typedef struct{
+    CMD_TYPE state;             // 命令类型 gets or puts
+    char cur_cmd[BUFFER_SIZE];  // 当前的命令 gets 10001  or puts 10422
+}thread_args;
+
+typedef struct{
+    int fd;         // 要下载的文件的fd
+    int sfd;        // 文件服务器的fd
+    int offset;     // 从哪个位置开始下载
+    int part_size;  // 从这个位置开始要下载多少
+}pth_gets_args;
 
 #endif

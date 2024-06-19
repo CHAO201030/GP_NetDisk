@@ -75,6 +75,9 @@ int main(int argc, char ** argv)
                 {//对新连接进行处理
                     int peerfd = accept(listenfd, NULL, NULL);
                     printf("\n conn %d has conneted.\n", peerfd);
+
+                    login_verify(peerfd);//登录-密码验证
+                    
                     //将新连接添加到epoll的监听红黑树上
                     addEpollReadfd(epfd, peerfd);
                 } 
