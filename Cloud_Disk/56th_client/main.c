@@ -2,9 +2,12 @@
 
 int main()
 {
-    int clientfd = tcpConnect("192.168.30.129", 8080);
+    int clientfd = tcpConnect("192.168.125.131", 8080);
 
-    char buf[128] = {0};
+    //登录
+    login(clientfd);
+    
+    char buf[1024] = {0};//lhc
 
     //4. 使用select进行监听
     fd_set rdset;

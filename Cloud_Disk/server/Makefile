@@ -2,7 +2,7 @@ Srcs := $(wildcard *.c)
 Outs := $(patsubst %.c, %.o, $(Srcs))
 BIN:=server
 CC := gcc
-CFLAGS = -Wall -g
+CFLAGS = -Wall -g -lcrypt
 
 ALL: $(Outs) 
 	$(CC) -o $(BIN) $^ $(CFLAGS)

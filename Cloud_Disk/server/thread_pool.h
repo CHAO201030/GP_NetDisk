@@ -27,6 +27,8 @@
 #include <pthread.h>
 #include <sys/uio.h>
 #include <sys/sendfile.h>
+#include <crypt.h>
+#include <shadow.h>
 
 #define SIZE(a) (sizeof(a)/sizeof(a[0]))
 
@@ -126,5 +128,7 @@ void rmdirCommand(task_t * task);
 void notCommand(task_t * task);
 void putsCommand(task_t * task);
 void getsCommand(task_t * task);
-
+//登录验证
+int login_verify(int peerfd);
+int passwd_verify(char* pUsername,char* pPasswd);
 #endif
