@@ -5,7 +5,7 @@ CC := gcc
 CFLAGS := -Iinc -Wall -g -DDEBUG -pthread
 
 # 链接器选项
-LDFLAGS := -lssl -lcrypto -lcrypt -lmysqlclient -ll8w8jwt -lmbedcrypto -lmbedx509
+LDFLAGS := -lssl -lcrypto -lcrypt -lmysqlclient -ll8w8jwt
 
 # 源文件目录
 SRC_DIR := src
