@@ -31,68 +31,67 @@ void task_analyse(int new_client_fd)
     }
 }
 
-void do_gets_task(int client_fd, char *cmd)
+void do_gets_task(int client_fd, char *file_name)
 {
-    // 打开文件
     char file_path[300] = {0};
-    sprintf(file_path, "../repository/%s", cmd);
-    printf("%s\n", file_path);
+    sprintf(file_path, "../repository/%s", file_name);
+    printf("gets %s\n", file_path);
+    
+    // 打开文件
     int fd = open(file_path, O_RDWR);
     if(fd == -1)
     {
         error(-1, errno, "open %s failed", file_path);
     }
+
     // 接收文件偏移信息
-    // TODO : 大小文件判断
     int offset = 0;
     int part_size = 0;
     int big_file_boundary = (BIG_FILE_SIZE >> 1) >> 12 << 12;
     
     recvn(client_fd, &offset, sizeof(offset));
     recvn(client_fd, &part_size, sizeof(part_size));
-    printf("offset = %d, part_size = %d\n", offset, part_size);
 
     bool is_big_file = part_size < big_file_boundary ? false : true;
 
     // 发送文件
     if(is_big_file)
     {
-        send_big_file(client_fd, fd, offset, part_size);
+        if((send_big_file(client_fd, fd, offset, part_size)) <= 0)
+        {
+            printf("[INFO] : Send %s failed\n", file_name);
+            
+            close(fd);
+            close(client_fd);
+            
+            return;
+        }
     }
     else
     {
-        int cur_size = 0;
-        int send_size = 0;
-        char file_buf[BUFFER_SIZE] = {0};
-
-        while(send_size < part_size)
+        if((send_small_file(client_fd, fd, offset, part_size)) <= 0)
         {
-            if(part_size - send_size < BUFFER_SIZE)
-            {
-                cur_size = part_size - send_size;
-            }
-            else
-            {
-                cur_size = BUFFER_SIZE;
-            }
-            bzero(file_buf, BUFFER_SIZE);
-
-            read(fd, file_buf, cur_size);
-            sendn(client_fd, file_buf, cur_size);
-
-            send_size += cur_size;
-        }
+            printf("[INFO] : Send %s failed\n", file_name);
+            
+            close(fd);
+            close(client_fd);
+            
+            return;
+        }    
     }
+
     close(fd);
     close(client_fd);
-    printf("[INFO] : send file %s success...\n", cmd);
+    printf("[INFO] : Send file %s success...\n", file_name);
 }
 
-void do_puts_task(int client_fd, char *cmd)
+void do_puts_task(int client_fd, char *file_name)
 {
     char file_path[300] = {0};
-    sprintf(file_path, "../repository/%s", cmd);
-    printf("%s\n", file_path);
+    sprintf(file_path, "../repository/%s", file_name);
+    printf("puts %s\n", file_path);
+    
+    // 打开文件
     int fd = open(file_path, O_RDWR|O_CREAT, 0666);
     if(fd == -1)
     {
@@ -101,62 +100,39 @@ void do_puts_task(int client_fd, char *cmd)
 
     bool is_big_file = false;
     recvn(client_fd, &is_big_file, sizeof(is_big_file));
+
+    // 接收文件大小
     off_t file_size = 0;
     recvn(client_fd, &file_size, sizeof(file_size));
 
     ftruncate(fd, file_size);
-    
-printf("%ld\n", file_size);
+
     if(is_big_file)
     {
-        // 接收大文件
-        int recv_size = 0;
-        int cur_size  = 0;
-
-        while(recv_size < file_size)
+        if((recv_big_file(client_fd, fd, file_size)) <= 0)
         {
-            if(file_size - recv_size < MMAP_SIZE)
-            {
-                cur_size = file_size - recv_size;
-            }
-            else
-            {
-                cur_size = MMAP_SIZE;
-            }
-
-            void *mm_addr = mmap(NULL, cur_size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, recv_size);
-        
-            recvn(client_fd, mm_addr, cur_size);
-
-            munmap(mm_addr, cur_size);
-
-            recv_size += cur_size;
+            printf("[INFO] : Recv file %s error\n", file_name);
+            
+            close(fd);
+            close(client_fd);
+            
+            return;
         }
     }
     else
     {
-        printf("file_size = %ld\n", file_size);
-        // 接收小文件
-        int recv_size = 0;
-        int cur_size  = 0;
-        char buf[BUFFER_SIZE] = {0};
-
-        while(recv_size < file_size)
+        if((recv_small_file(client_fd, fd, file_size)) <= 0)
         {
-            if(file_size - recv_size < BUFFER_SIZE)
-            {
-                cur_size = file_size - recv_size;
-            }
-            else
-            {
-                cur_size = BUFFER_SIZE;
-            }
-
-            bzero(buf, sizeof(buf));
-            recvn(client_fd, buf, cur_size);
-            write(fd, buf, cur_size);
+            printf("[INFO] : Recv file %s error\n", file_name);
             
-            recv_size += file_size;
+            close(fd);
+            close(client_fd);
+            
+            return;
         }
     }
+
+    close(fd);
+    close(client_fd);
+    printf("[INFO] : Recv file %s success...\n", file_name);
 }

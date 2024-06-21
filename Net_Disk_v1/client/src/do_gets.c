@@ -66,54 +66,41 @@ void do_gets(thread_args *pth_args)
                 gets_train.data_len = strlen((const char *)md5sum);
                 gets_train.state = CMD_GETS;
                 strncpy(gets_train.data_buf, (const char *)md5sum, gets_train.data_len);
+
                 // 给文件服务器发送命令火车
                 send_cmd(&gets_train, CMD_GETS, file_server1_fd);
                 send_cmd(&gets_train, CMD_GETS, file_server2_fd);
+
                 int cur_fd = open(new_file_path, O_RDWR|O_CREAT, 0666);
                 if(cur_fd == -1)
                 {
                     printf("[INFO] : create file failed\n");
                     return;
                 }
+
                 ftruncate(cur_fd, part1_size + part2_size);
+
                 // 给文件服务器1发送文件偏移信息
                 int offset1 = 0;
                 sendn(file_server1_fd, &offset1, sizeof(offset1));
                 sendn(file_server1_fd, &part1_size, sizeof(part1_size));
+
                 // 给文件服务器2发送文件偏移信息
                 int offset2 = part1_size;
                 sendn(file_server2_fd, &offset2, sizeof(offset2));
                 sendn(file_server2_fd, &part2_size, sizeof(part2_size));
 
-                pthread_t pth_gets1;
-                pthread_t pth_gets2;
-
-                pth_gets_args file_info_1 = {0};
-                pth_gets_args file_info_2 = {0};
-
-                file_info_1.fd = cur_fd;
-                file_info_1.sfd = file_server1_fd;
-                file_info_1.offset = 0;
-                file_info_1.part_size = part1_size;
-                
-                file_info_2.fd = cur_fd;
-                file_info_2.sfd = file_server2_fd;
-                file_info_2.offset = part1_size;
-                file_info_2.part_size = part2_size;
-
-                pthread_create(&pth_gets1, NULL, pth_download, (void *)&file_info_1);
-                pthread_create(&pth_gets2, NULL, pth_download, (void *)&file_info_2);
-
-                pthread_join(pth_gets1, NULL);
-                pthread_join(pth_gets2, NULL);
+                multi_point_download(cur_fd, 
+                                     file_server1_fd, offset1, part1_size, 
+                                     file_server2_fd, offset2, part2_size);
             
                 close(cur_fd);
+                close(route_new_fd); 
                 close(file_server1_fd);
                 close(file_server2_fd);
             }
             else
             {
-                // printf("send small file\n");
                 // 传送小文件
                 int file_server1_fd = tcp_connect(ip1, port1);
 
@@ -121,6 +108,7 @@ void do_gets(thread_args *pth_args)
                 gets_train.data_len = strlen((const char *)md5sum);
                 gets_train.state = CMD_GETS;
                 strncpy(gets_train.data_buf, (const char *)md5sum, gets_train.data_len);
+
                 // 给文件服务器发送命令火车
                 send_cmd(&gets_train, CMD_GETS, file_server1_fd);
 
@@ -130,9 +118,7 @@ void do_gets(thread_args *pth_args)
                 sendn(file_server1_fd, &part1_size, sizeof(part1_size));
 
 
-                int file_size = part1_size, recv_size = 0, cur_size = 0;
-
-                char file_buf[BUFFER_SIZE] = {0};
+                off_t file_size = part1_size;
 
                 int cur_fd = open(new_file_path, O_RDWR|O_CREAT, 0666);
                 if(cur_fd == -1)
@@ -141,23 +127,10 @@ void do_gets(thread_args *pth_args)
                     return;
                 }
 
-                while(recv_size < file_size)
-                {
-                    if(file_size - recv_size < BUFFER_SIZE)
-                    {
-                        cur_size = file_size - recv_size;
-                    }
-                    else
-                    {
-                        cur_size = BUFFER_SIZE;
-                    }
-
-                    bzero(file_buf, BUFFER_SIZE);
-                    recvn(file_server1_fd, file_buf, cur_size);
-                    write(cur_fd, file_buf, cur_size);
-
-                    recv_size += cur_size;
-                }
+                recv_small_file(file_server1_fd, cur_fd, file_size);
+                
+                close(route_new_fd); 
+                close(file_server1_fd);
             }
         }
         else
@@ -168,9 +141,9 @@ void do_gets(thread_args *pth_args)
     else
     {
         printf("[INFO] : Token verify failed\n");
+        
+        close(route_new_fd);
     }
     
-    close(route_new_fd);
-
     return ;
 }

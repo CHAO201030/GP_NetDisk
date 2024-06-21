@@ -25,12 +25,7 @@ void do_gets(client_t *client, char *cmd)
     if(sql_do_gets(client, target_file, md5sum,
                    ip1, port1, &part1_size,
                    ip2, port2, &part2_size) == 0)
-    {
-        /**
-         * 1. 验证是否允许下载 ---> 验证成功
-         * 2. 发送多点下载所需的文件信息
-        */
-        
+    {       
         is_valid = true;
         sendn(client->fd, &is_valid, sizeof(is_valid));
 

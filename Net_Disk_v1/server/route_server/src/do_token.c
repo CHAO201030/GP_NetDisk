@@ -70,7 +70,9 @@ int do_token(client_t *client, char *token)
         client->code = client_main_thread->code;
         client->pre_code = client_main_thread->pre_code;
         client->uid = client_main_thread->uid;
-
+        strcpy(client->name, client_main_thread->name);
+        strcpy(client->path, client_main_thread->path);
+    
         // 打印日志
         LOG_INFO("user %s Token valid\n", client_main_thread->name);
 

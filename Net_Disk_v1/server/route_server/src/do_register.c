@@ -27,11 +27,8 @@ void generate_salt(char *salt)
 }
 
 void do_register(client_t *client, char *cmd)
-{
-    printf("[INFO] : %s\n", cmd);
-    
+{  
     char *user_name = cmd;
-    printf("[INFO] : user -> %s Register\n", user_name);
 
     if(sql_check_dup_user_name(user_name) == 0)
     {

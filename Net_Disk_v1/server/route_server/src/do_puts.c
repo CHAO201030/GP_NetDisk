@@ -70,11 +70,10 @@ void do_puts(client_t *client, char *cmd)
         char port2[5] = {0};
 
         load_balance(ip1, port1, ip2, port2);
+        
         // 发送文件服务器信息
-        sendn(client->fd, ip1, sizeof(ip1));
-        sendn(client->fd, ip2, sizeof(ip2));
-        sendn(client->fd, port1, sizeof(port1));
-        sendn(client->fd, port2, sizeof(port2));
+        send_file_server_info(client->fd, ip1, sizeof(ip1), port1, sizeof(port1));
+        send_file_server_info(client->fd, ip2, sizeof(ip2), port2, sizeof(port2));
 
         // 接收文件的大小 以及分片的大小
         off_t file_size  = 0;
