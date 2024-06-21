@@ -3,6 +3,8 @@
 
 extern HashMap *client_manage_map;
 
+extern int log_fd;
+
 int decode_token(const char* token, int *client_main_thread_fd)
 {
     struct l8w8jwt_decoding_params params;
@@ -68,6 +70,9 @@ int do_token(client_t *client, char *token)
         client->code = client_main_thread->code;
         client->pre_code = client_main_thread->pre_code;
         client->uid = client_main_thread->uid;
+
+        // 打印日志
+        LOG_INFO("user %s Token valid\n", client_main_thread->name);
 
         return 0;
     }

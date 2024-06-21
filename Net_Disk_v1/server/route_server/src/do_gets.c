@@ -3,10 +3,10 @@
 
 extern MYSQL *sql_conn;
 
-void do_gets(client_t *client, char *cmd)
-{  
-    printf("[INFO] : do_gets begin\n");
+extern int log_fd;
 
+void do_gets(client_t *client, char *cmd)
+{
     char *target_file = strtok(cmd, " ");
     target_file = strtok(NULL, " ");
 
@@ -44,6 +44,9 @@ void do_gets(client_t *client, char *cmd)
         sendn(client->fd, ip2, sizeof(ip2));
         sendn(client->fd, port2, sizeof(port2));
         sendn(client->fd, &part2_size, sizeof(part2_size));
+        
+        // 打印日志
+        LOG_INFO("user %s download %s in %s\n", client->name, target_file, client->path);
     }
     else
     {

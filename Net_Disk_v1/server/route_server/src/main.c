@@ -16,6 +16,8 @@
 #define THREAD_NUM "5"
 #define MAX_CAPACITY 1024
 
+int log_fd = -1;
+
 int exit_pipe[2];
 
 HashMap *client_manage_map = NULL;
@@ -61,6 +63,11 @@ int main(int argc, char* argv[])
     }
 
     timer_start();
+
+    if((log_fd = open("../log/log.txt", O_RDWR|O_CREAT|O_APPEND, 0666)) == -1)
+    {
+        error(-1, errno, "[INFO] : log_file open failed\nReason");
+    }
 
     int sfd = tcp_init(ROUTE_IP, ROUTE_PORT);
 
@@ -128,7 +135,7 @@ int main(int argc, char* argv[])
                          * 1. 构造task_t
                          * 2. 子线程 该干活啦! 你不干有的是线程干!
                          * 3. 取消对客户端子线程的sfd的监听
-                         * 4. 由服务器子线程将客户端子线程踢出服务器 直接封号10年
+                         * 4. 由服务器子线程将客户端子线程踢出服务器
                         */
                         epoll_del(epfd, cur_client->fd);
 
@@ -147,7 +154,7 @@ int main(int argc, char* argv[])
                         if(ret == CLIENT_EXIT)
                         {
                             // 客户端exit命令
-                            printf("[INFO] : user <%s> exit\n", cur_client->name);
+                            LOG_INFO("user %s %s\n", cur_client->name, "exit");
                             epoll_del(epfd, cur_client->fd);
                             close(cur_client->fd);
                             del_client(client_manage_map, time_queue, cur_client);
@@ -164,14 +171,13 @@ int main(int argc, char* argv[])
                 else
                 {
                     // 对端断开了
-                    printf("client fd = %d exit\n", cur_client->fd);
+                    LOG_INFO("user %s %s\n", cur_client->name, "exit");
                     epoll_del(epfd, cur_client->fd);
                     close(cur_client->fd);
                     del_client(client_manage_map, time_queue, cur_client);
                 }
             }
         }// end of search evs[i].data.fd
-
     }// end of while(1)
     
     sql_disconnect_to_database();

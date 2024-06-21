@@ -4,6 +4,8 @@ extern HashMap *client_manage_map;
 
 extern time_out_queue *time_queue;
 
+extern int log_fd;
+
 /* -------------------- 哈希表 --------------------- */
 
 HashMap* hashmap_create(void)
@@ -318,7 +320,8 @@ int clean_client(HashMap *hash_map, time_out_queue *tq)
 
         if(cur_client == NULL)return -1;
 
-        printf("[INFO] : user <%s> timeout\n", cur_client->name);
+        // 打印日志
+        LOG_INFO("user %s time out\n", cur_client->name);
         
         hashmap_delete(hash_map, cur_client);
 

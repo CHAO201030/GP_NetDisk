@@ -3,6 +3,8 @@
 
 extern MYSQL *sql_conn;
 
+extern int log_fd;
+
 void generate_salt(char *salt)
 {
     char str[9] = {0};
@@ -57,6 +59,9 @@ void do_register(client_t *client, char *cmd)
 
         int register_success = 1;
         sendn(client->fd, &register_success, sizeof(register_success));
+        
+        // 打印日志
+        LOG_INFO("user %s register\n", user_name);
     }
 }
 

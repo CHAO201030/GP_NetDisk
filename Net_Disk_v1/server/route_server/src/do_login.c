@@ -3,6 +3,8 @@
 
 extern MYSQL *sql_conn;
 
+extern int log_fd;
+
 int generate_token(char *token, const client_t* client)
 {
     char* jwt;
@@ -57,10 +59,7 @@ int generate_token(char *token, const client_t* client)
 
 void do_login(client_t *client, char *cmd)
 {
-    printf("[INFO] : %s\n", cmd);
     char *user_name = cmd;
-
-    printf("[INFO] : user -> %s want Login\n", user_name);
 
     int uid = 0;
     char salt[16] = {0};
@@ -100,6 +99,9 @@ void do_login(client_t *client, char *cmd)
                 client->pre_code = -1;
                 strncpy(client->name, user_name, strlen(user_name));
                 strcpy(client->path, "~");
+
+                // 打印日志
+                LOG_INFO("user %s login\n", client->name);
 
                 return ;
             }

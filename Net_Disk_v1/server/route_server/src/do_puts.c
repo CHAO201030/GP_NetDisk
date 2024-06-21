@@ -3,6 +3,8 @@
 
 extern MYSQL *sql_conn;
 
+extern int log_fd;
+
 void load_balance(char* ip1, char *port1, char *ip2, char* port2)
 {
     srand(time(NULL));
@@ -54,6 +56,9 @@ void do_puts(client_t *client, char *cmd)
         quick_trans = true;
         sendn(client->fd, &quick_trans, sizeof(quick_trans));
         sql_do_quick_puts(client, md5sum, file_name);
+        
+        // 打印日志
+        LOG_INFO("user %s quick upload %s in %s\n", client->name, file_name, client->path);
     }
     else if(ret == 1)
     {
@@ -84,6 +89,9 @@ void do_puts(client_t *client, char *cmd)
         sql_do_puts(client, file_name, md5sum, file_size, \
                     ip1, port1, part1_size, \
                     ip2, port2, part2_size);
+        
+        // 打印日志
+        LOG_INFO("user %s upload %s in %s\n", client->name, file_name, client->path);
     }
     return;
 }

@@ -3,14 +3,14 @@
 
 extern MYSQL *sql_conn;
 
+extern int log_fd;
+
 void do_cd(client_t *client, char *cmd)
 {
     /*
         1. 支持cd到当前目录的子目录 或者到上一级目录
         2. cd后要把路径拼接到当前client的 path[128] 路径中
     */
-
-    printf("[INFO] : %s\n", cmd);
 
     char *target_dir = strtok(cmd, " ");
     target_dir = strtok(NULL, " ");
@@ -46,6 +46,9 @@ void do_cd(client_t *client, char *cmd)
 
         server_msg.data_len = strlen(client->path);
         strncpy(server_msg.data_buf, client->path, server_msg.data_len);
+        
+        // 打印日志
+        LOG_INFO("user %s cd %s\n", client->name, client->path);
     }
     else
     {
@@ -59,6 +62,8 @@ void do_cd(client_t *client, char *cmd)
     sendn(client->fd, &server_msg.data_len, sizeof(server_msg.data_len));
     sendn(client->fd, &server_msg.state, sizeof(server_msg.state));
     sendn(client->fd, server_msg.data_buf, server_msg.data_len);
+
+    return;
 }
 
 int sql_do_cd(int uid, int *code, int *pre_code, const char *target_dir)

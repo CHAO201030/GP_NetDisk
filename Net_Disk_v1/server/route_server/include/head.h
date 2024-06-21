@@ -33,6 +33,17 @@
 
 #define DEBUG_LOG() do{printf("%s, %d\n", __FILE__, __LINE__);}while(0)
 
+#define LOG_INFO(format, ...) do{\
+    time_t t = time(NULL);\
+    char log_buf[256] = {0};\
+    sprintf(log_buf, "[INFO] : %s", ctime(&t));\
+    int log_buf_len = strlen(log_buf);\
+    log_buf[log_buf_len - 1] = ' ';\
+    sprintf(log_buf + log_buf_len, format, ##__VA_ARGS__);\
+    log_buf_len = strlen(log_buf);\
+    write(log_fd, log_buf, log_buf_len);\
+    printf("%s", log_buf);\
+}while(0)
 
 typedef struct{
 	int  fd; 			// 客户端的fd 

@@ -3,10 +3,10 @@
 
 extern MYSQL *sql_conn;
 
+extern int log_fd;
+
 void do_mkdir(client_t *client, char *cmd)
 {
-    printf("[INFO] : %s\n", cmd);
-
     char *target_dir = strtok(cmd, " ");
     target_dir = strtok(NULL, " ");
     
@@ -17,6 +17,9 @@ void do_mkdir(client_t *client, char *cmd)
         server_msg.state = CMD_MKDIR;
         sprintf(server_msg.data_buf, "SUCCESS");
         server_msg.data_len = strlen(server_msg.data_buf);
+        
+        // 打印日志
+        LOG_INFO("user %s mkdir %s in %s\n", client->name, target_dir, client->path);
     }
     else
     {
