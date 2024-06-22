@@ -85,7 +85,7 @@ typedef struct{
 typedef struct{
     int fd;                 // 对端的 fd
     CMD_TYPE state;         // 任务的类型 gets  or  puts
-    char task_info[256];    // 任务信息 gets 10001  or  puts 10042
+    char task_info[256];    // 任务信息 gets 10001  or  puts 10422
 }task_t;
 
 typedef struct{

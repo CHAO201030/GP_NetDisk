@@ -7,6 +7,24 @@ extern int log_fd;
 
 void do_cd(client_t *client, char *cmd)
 {
+    /*
+        CD 操作
+            1. cd到上一级目录
+                (1) cur_path : ~/
+                            根目录不能再向上cd了
+                (2) cur_path : ~/dir1 --> ~/
+                            cd到根目录
+                (3) cur_path : ~/dir1/dir2 --> ~/dir1
+                            cd到上一级目录 需要查询数据库获得 code 和 pre_code 信息
+                            
+            2. cd到下一级目录
+                (1) cur_path : ~/ --> ~/dir1
+                (2) cur_path : ~/dir1 --> ~/dir1/dir2
+                            cd到下一级目录
+
+            3. cd到不存在的目录   
+    */
+
     char *target_dir = strtok(cmd, " ");
     target_dir = strtok(NULL, " ");
 

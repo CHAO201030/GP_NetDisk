@@ -7,6 +7,11 @@ extern int log_fd;
 
 void do_pwd(client_t *client, char *cmd)
 {
+    /*
+        PWD 操作
+            返回 client->path 的内容给客户端
+    */
+
     train_t server_msg = {0};
     server_msg.state = CMD_PWD;
     server_msg.data_len = strlen(client->path);

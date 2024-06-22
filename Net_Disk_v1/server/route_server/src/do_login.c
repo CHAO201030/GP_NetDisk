@@ -50,7 +50,7 @@ int generate_token(char *token, const client_t* client)
 
     strncpy(token, jwt, jwt_length);
 
-    printf("user <%s> TOKEN : %s\n", client->name, token);
+    printf("user TOKEN : %s\n", token);
 
     l8w8jwt_free(jwt);
 
@@ -59,6 +59,13 @@ int generate_token(char *token, const client_t* client)
 
 void do_login(client_t *client, char *cmd)
 {
+    /*
+        用户登录
+            1. 根据用户名查找数据库获得盐值并发送给客户端
+            2. 收到客户端用盐值加密后的密码并与数据库中的密文密码进行对比
+            3. 登陆成功后生成 TOKEN 发送给客户端 并初始化一个 client_t * 类型的结构体表示这个用户
+    */
+   
     char *user_name = cmd;
 
     int uid = 0;
