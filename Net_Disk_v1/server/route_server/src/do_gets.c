@@ -35,7 +35,7 @@ void do_gets(client_t *client, char *cmd)
         sendn(client->fd, ip1, sizeof(ip1));
         sendn(client->fd, port1, sizeof(port1));
         sendn(client->fd, &part1_size, sizeof(part1_size));
-        // 发送文件服务器2的 {IP, PORT, Part1_size}
+        // 发送文件服务器2的 {IP, PORT, Part2_size}
         sendn(client->fd, ip2, sizeof(ip2));
         sendn(client->fd, port2, sizeof(port2));
         sendn(client->fd, &part2_size, sizeof(part2_size));

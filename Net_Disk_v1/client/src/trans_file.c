@@ -56,8 +56,8 @@ void multi_point_download(int cur_fd, int file_server1_fd, int offset1, int part
     pthread_t pth_gets1;
     pthread_t pth_gets2;
 
-    pth_gets_args file_info_1 = {cur_fd, file_server1_fd, 0, part1_size};
-    pth_gets_args file_info_2 = {cur_fd, file_server2_fd, part1_size, part2_size};
+    pth_trans_args file_info_1 = {cur_fd, file_server1_fd, 0, part1_size};
+    pth_trans_args file_info_2 = {cur_fd, file_server2_fd, part1_size, part2_size};
 
     pthread_create(&pth_gets1, NULL, pth_download, (void *)&file_info_1);
     pthread_create(&pth_gets2, NULL, pth_download, (void *)&file_info_2);
@@ -93,19 +93,12 @@ int recv_small_file(int sfd, int fd, off_t file_size)
 
 int recv_big_file(int sfd, int fd, int offset, int part_size)
 {
+    off_t cur_size  = 0;
     off_t recv_size = 0;
-    off_t cur_size = 0;
 
     while(recv_size < part_size)
     {
-        if(part_size - recv_size < MMAP_SIZE)
-        {
-            cur_size = part_size - recv_size;
-        }
-        else
-        {
-            cur_size = MMAP_SIZE;
-        }
+        cur_size = (part_size - recv_size) < MMAP_SIZE ? part_size - recv_size : MMAP_SIZE;
 
         // 每次映射 cur_size 个字节 从 fd 的 recv_size + offset 位置开始
         void *mm_addr = mmap(NULL, cur_size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, offset + recv_size);

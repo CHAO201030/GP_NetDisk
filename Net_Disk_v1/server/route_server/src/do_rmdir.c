@@ -7,6 +7,18 @@ extern int log_fd;
 
 void do_rmdir(client_t *client, char *cmd)
 {
+    /*
+        RMDIR 操作
+            先对目录的存在性做判断
+                1. 不存在
+                    告诉客户端当前工作目录下没有这个目标目录
+                2. 存在
+                    (1)目标目录为空
+                        在数据库中删除这个表项 告诉客户端删除成功
+                    (2)目标目录不为空
+                        告诉客户端目标目录不为空
+    */
+
     char *target_dir = strtok(cmd, " ");
     target_dir = strtok(NULL, " ");
 

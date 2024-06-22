@@ -19,7 +19,7 @@ void *pth_func(void *args)
 
 void *pth_download(void *args)
 {
-    pth_gets_args *file_info = (pth_gets_args *)args;
+    pth_trans_args *file_info = (pth_trans_args *)args;
 
     recv_big_file(file_info->sfd, file_info->fd, file_info->offset, file_info->part_size);
 

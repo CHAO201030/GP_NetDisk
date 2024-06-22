@@ -7,6 +7,15 @@ extern int log_fd;
 
 void do_mkdir(client_t *client, char *cmd)
 {
+    /*
+        MKDIR 操作
+            在当前工作目录下查找是否有同名的文件或目录
+                1. 有同名(TODO BUG IN HERE)
+                    告诉客户端创建失败
+                2. 没有同名
+                    在 VFS 表中创建一个表示目录的表项 并将其 pre_code 设置为 client->code 
+    */
+
     char *target_dir = strtok(cmd, " ");
     target_dir = strtok(NULL, " ");
     

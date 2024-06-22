@@ -7,19 +7,28 @@ extern int log_fd;
 
 void do_ls(client_t *client, char *cmd)
 {
+    /*
+        LS 操作
+            查询数据库 获得 VFS 中所有 pre_code 为当前 client->code 且 is_valid = 1 的所有表项
+    */
+
     // 发送消息 客户端跳转到recv_server_msg函数执行
     train_t server_msg = {0};
     server_msg.state = CMD_LS;
-    sql_do_ls(client, server_msg.data_buf);
-    server_msg.data_len = strlen(server_msg.data_buf);
+    if((sql_do_ls(client, server_msg.data_buf)) == 0)
+    {
+        server_msg.data_len = strlen(server_msg.data_buf);
 
-    // 发送结果给客户端
-    sendn(client->fd, &server_msg.data_len, sizeof(server_msg.data_len));
-    sendn(client->fd, &server_msg.state, sizeof(server_msg.state));
-    sendn(client->fd, server_msg.data_buf, server_msg.data_len);
+        // 发送结果给客户端
+        sendn(client->fd, &server_msg.data_len, sizeof(server_msg.data_len));
+        sendn(client->fd, &server_msg.state, sizeof(server_msg.state));
+        sendn(client->fd, server_msg.data_buf, server_msg.data_len);
 
-    // 打印日志
-    LOG_INFO("user %s ls %s\n", client->name, client->path);
+        // 打印日志
+        LOG_INFO("user %s ls %s\n", client->name, client->path);
+    }
+
+    return;
 }
 
 int sql_do_ls(const client_t* client, char *server_msg)
@@ -39,6 +48,7 @@ int sql_do_ls(const client_t* client, char *server_msg)
     if(mysql_query(sql_conn, query))
     {
         printf("[INFO] : Error making query: %s\n", mysql_error(sql_conn));
+        return -1;
     }
     else
     {

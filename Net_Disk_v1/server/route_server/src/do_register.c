@@ -26,8 +26,17 @@ void generate_salt(char *salt)
     strcat(salt, "$");
 }
 
+
 void do_register(client_t *client, char *cmd)
-{  
+{
+    /*
+        用户注册
+            1. 检查是否重名
+            2. 生成盐值并发送给客户端
+            3. 收到客户端用盐值加密后的密码并存入数据库中
+            4. 告知客户端注册成功
+    */
+    
     char *user_name = cmd;
 
     if(sql_check_dup_user_name(user_name) == 0)
