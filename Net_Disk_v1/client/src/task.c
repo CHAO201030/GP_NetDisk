@@ -123,7 +123,7 @@ int recv_server_msg(int route_sfd)
 
     if(ret == 0)
     {
-        printf("\n[INFO] : Route Server shut down client will cose after GETS/PUTS finish\n");
+        printf("\n[INFO] : Route Server close client will cose after GETS/PUTS finish\n");
         return 0;
     }
 

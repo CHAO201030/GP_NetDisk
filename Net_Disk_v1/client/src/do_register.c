@@ -4,7 +4,7 @@ extern char cur_path[256];
 
 void do_register(int route_sfd)
 {
-    printf("[INFO] : client do register\n");
+    // printf("[INFO] : client do register\n");
     char user_name[32] = {0};
     char user_passwd[64] = {0};
 
@@ -45,10 +45,10 @@ void do_register(int route_sfd)
         p = strtok(NULL, "$");
         p = strtok(NULL, "$");
         char ec_passwd[128] = {0};
-        strncpy(ec_passwd, p, strlen(ec_passwd));
+        strncpy(ec_passwd, p, strlen(p));
         
-        sendn(route_sfd, ec_passwd, sizeof(ec_passwd));
-        
+        int ret = sendn(route_sfd, ec_passwd, sizeof(ec_passwd));
+        printf("%d\n%s\n", ret, ec_passwd);
         int register_success = 0;
         recvn(route_sfd, &register_success, sizeof(register_success));
         printf("[INFO] : Register %s success...\n", user_name);
@@ -57,7 +57,7 @@ void do_register(int route_sfd)
     else
     {
         // 用户名已存在
-        printf("[INFO] : Register false please restart client...\n");
+        printf("[INFO] : Register is exist restart client to regist...\n");
         exit(-1);
     }
 }

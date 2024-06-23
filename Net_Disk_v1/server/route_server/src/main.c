@@ -129,11 +129,11 @@ int main(int argc, char* argv[])
             {
                 client_t *cur_client  = get_cur_client(client_manage_map, evs[i].data.fd);
 
-                update_client(client_manage_map, time_queue, cur_client);
-
                 train_t cmd_train = {0};
                 if(recv_cmd(cur_client->fd, &cmd_train))
                 {
+                    update_client(client_manage_map, time_queue, cur_client);
+
                     if(cmd_train.state == CMD_GETS || cmd_train.state == CMD_PUTS)
                     {
                         // 长命令

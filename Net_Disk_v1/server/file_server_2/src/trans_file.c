@@ -119,7 +119,7 @@ int recv_big_file(int client_fd, int fd, off_t file_size)
 
     while(recv_size < file_size)
     {
-        cur_size = (file_size - recv_size) < MMAP_SIZE ? file_size - cur_size : MMAP_SIZE;
+        cur_size = (file_size - recv_size) < MMAP_SIZE ? file_size - recv_size : MMAP_SIZE;
 
         void *mm_addr = mmap(NULL, cur_size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, recv_size);
 

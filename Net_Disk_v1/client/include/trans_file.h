@@ -73,7 +73,7 @@ int send_small_file(int file_server_fd, int cur_fd, off_t file_size);
  * @param offset2 文件服务器2发送的分片起始位置
  * @param part2_size 文件服务器2发送的分片结束位置
  */
-void multi_point_download(int cur_fd, int file_server1_fd, int offset1, int part1_size, int file_server2_fd, int offset2, int part2_size);
+void multi_point_download(int part1_fd, int part2_fd, int file_server1_fd, int offset1, int part1_size, int file_server2_fd, int offset2, int part2_size);
 
 /**
  * @brief 接收大文件

@@ -288,8 +288,8 @@ int del_client(HashMap *hash_map, time_out_queue *tq, client_t* cur_client)
      * 2. 根据 slot_index 将 client_fd 从超时队列中删除
     */
     V slot_idx = hashmap_get(hash_map, cur_client);
-    hashmap_delete(hash_map, cur_client);
     tq_pop(tq, slot_idx, cur_client->fd);
+    hashmap_delete(hash_map, cur_client);
 
     return 0;
 }

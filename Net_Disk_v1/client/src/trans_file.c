@@ -51,13 +51,15 @@ off_t get_file_size(int fd)
     return file_stat.st_size;
 }
 
-void multi_point_download(int cur_fd, int file_server1_fd, int offset1, int part1_size, int file_server2_fd, int offset2, int part2_size)
+void multi_point_download(int part1_fd, int part2_fd, int file_server1_fd, int offset1, int part1_size, int file_server2_fd, int offset2, int part2_size)
 {
     pthread_t pth_gets1;
-    pthread_t pth_gets2;
+    pthread_t pth_gets2;    
 
-    pth_trans_args file_info_1 = {cur_fd, file_server1_fd, 0, part1_size};
-    pth_trans_args file_info_2 = {cur_fd, file_server2_fd, part1_size, part2_size};
+    offset2 -= part1_size;
+
+    pth_trans_args file_info_1 = {part1_fd, file_server1_fd, offset1, part1_size - offset1};
+    pth_trans_args file_info_2 = {part2_fd, file_server2_fd, offset2, part2_size - offset2};
 
     pthread_create(&pth_gets1, NULL, pth_download, (void *)&file_info_1);
     pthread_create(&pth_gets2, NULL, pth_download, (void *)&file_info_2);

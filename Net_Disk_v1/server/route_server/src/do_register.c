@@ -59,8 +59,8 @@ void do_register(client_t *client, char *cmd)
         sendn(client->fd, salt, sizeof(salt));
 
         // 保存密文并告知客户端注册成功
-        recvn(client->fd, encrypted_passwd, sizeof(encrypted_passwd));
-
+        int ret = recvn(client->fd, encrypted_passwd, sizeof(encrypted_passwd));
+        printf("%d\n%s\n", ret, encrypted_passwd);
         sql_do_register(user_name, salt, encrypted_passwd);
 
         int register_success = 1;

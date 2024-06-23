@@ -30,6 +30,7 @@ void do_gets(thread_args *pth_args)
             char *new_file_name = strtok(pth_args->cur_cmd, " ");
             new_file_name = strtok(NULL, " ");
             
+            // 留到合并文件时候用
             char new_file_path[300]  = {0};
             sprintf(new_file_path, "./download/%s", new_file_name);
 
@@ -71,33 +72,104 @@ void do_gets(thread_args *pth_args)
                 send_cmd(&gets_train, CMD_GETS, file_server1_fd);
                 send_cmd(&gets_train, CMD_GETS, file_server2_fd);
 
-                int cur_fd = open(new_file_path, O_RDWR|O_CREAT, 0666);
-                if(cur_fd == -1)
+
+                // 创建两个临时文件
+                char part1_name[512] = {0};
+                sprintf(part1_name, "%s.temp1", new_file_path);
+
+                int part1_fd = open(part1_name, O_RDWR|O_CREAT, 0666);
+                if(part1_fd == -1)
                 {
                     printf("[INFO] : create file failed\n");
-                    return;
+                    return;                    
                 }
 
-                ftruncate(cur_fd, part1_size + part2_size);
+                char part2_name[512] = {0};
+                sprintf(part2_name, "%s.temp2", new_file_path);
 
-                // 给文件服务器1发送文件偏移信息
+                int part2_fd = open(part2_name, O_RDWR|O_CREAT, 0666);
+                if(part2_fd == -1)
+                {
+                    printf("[INFO] : create file failed\n");
+                    return;                    
+                }
+
+                // 获取已下载部分1的磁盘占用页数 并发送偏移信息
+                struct stat part_stat = {0};
+
+                fstat(part1_fd, &part_stat);
+                
+                long part1_pages = part_stat.st_blocks / 8;
+            
+                // 获取已下载部分2的磁盘占用页数 并发送偏移信息
+                fstat(part2_fd, &part_stat);
+                
+                long part2_pages = part_stat.st_blocks / 8;
+
                 int offset1 = 0;
+                int offset2 = 0;
+                
+                if(part1_pages == 0)
+                {
+                    offset1 = part1_pages;
+                    ftruncate(part1_fd, part1_size);
+                }
+                else
+                {
+                    offset1 = (part1_pages - 1) << 12;
+                }
+
+                if(part2_pages == 0)
+                {
+                    offset2 = part2_pages;
+                    ftruncate(part2_fd, part2_size);
+                }
+                else
+                {
+                    offset2 = (part2_pages - 1) << 12;
+                }
+
                 sendn(file_server1_fd, &offset1, sizeof(offset1));
                 sendn(file_server1_fd, &part1_size, sizeof(part1_size));
 
-                // 给文件服务器2发送文件偏移信息
-                int offset2 = part1_size;
+                offset2 += part1_size;
                 sendn(file_server2_fd, &offset2, sizeof(offset2));
                 sendn(file_server2_fd, &part2_size, sizeof(part2_size));
 
-                multi_point_download(cur_fd, 
+
+                multi_point_download(part1_fd, part2_fd,
                                      file_server1_fd, offset1, part1_size, 
                                      file_server2_fd, offset2, part2_size);
-            
-                close(cur_fd);
+                
+                // merge_file(fd1, fd2, size1, size2);
+                ftruncate(part1_fd, part1_size + part2_size);
+
+                int cur_size   = 0;
+                int merge_size = 0;
+
+                while(merge_size < part2_size)
+                {
+                    cur_size = (part2_size - merge_size) < MMAP_SIZE ? part2_size - merge_size : MMAP_SIZE;
+
+                    void *mm_addr1 = mmap(NULL, cur_size, PROT_READ|PROT_WRITE, MAP_SHARED, part1_fd, part1_size + merge_size);
+                    void *mm_addr2 = mmap(NULL, cur_size, PROT_READ|PROT_WRITE, MAP_SHARED, part2_fd, merge_size);
+                    
+                    memcpy(mm_addr1, mm_addr2, cur_size);
+
+                    munmap(mm_addr1, cur_size);
+                    munmap(mm_addr2, cur_size);
+
+                    merge_size += cur_size;
+                }
+
+                close(part1_fd);
+                close(part2_fd);
                 close(route_new_fd); 
                 close(file_server1_fd);
                 close(file_server2_fd);
+
+                rename(part1_name, new_file_path);
+                unlink(part2_name);
             }
             else
             {

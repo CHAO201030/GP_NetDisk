@@ -4,8 +4,8 @@ extern char cur_path[256];
 
 void do_cd(train_t server_msg)
 {
-    printf("[INFO] : client do cd\n");
-    printf("recv path = %s\n", server_msg.data_buf);
+    // printf("[INFO] : client do cd\n");
+    // printf("recv path = %s\n", server_msg.data_buf);
     
     if(strcmp(server_msg.data_buf, "ERROR") == 0)
     {

@@ -68,7 +68,7 @@ void do_login(int route_sfd)
             recvn(route_sfd, &token_len, sizeof(token_len));
             TOKEN = calloc(token_len + 1, sizeof(char));
             recvn(route_sfd, TOKEN, token_len);
-            printf("TOKEN : %s\n", TOKEN);
+            // printf("TOKEN : %s\n", TOKEN);
             sprintf(cur_path, "\033[31m%s\033[36m@NetDisk:\033[34m~$\033[0m ", user_name);
             printf("%s", cur_path);
             fflush(stdout);
