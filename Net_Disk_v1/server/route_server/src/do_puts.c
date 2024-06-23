@@ -1,7 +1,10 @@
 #include "../include/route_task.h"
 #include "../include/client_manager.h"
+#include "../include/config.h"
 
 extern MYSQL *sql_conn;
+
+extern config_table_t *cfg_table;
 
 extern int log_fd;
 
@@ -13,26 +16,26 @@ void load_balance(char* ip1, char *port1, char *ip2, char* port2)
     {
     case 0:
     {
-        sprintf(ip1,   "%s", CLUSTER_1_IP);
-        sprintf(port1, "%s", CLUSTER_1_PORT);
-        sprintf(ip2,   "%s", CLUSTER_2_IP);
-        sprintf(port2, "%s", CLUSTER_2_PORT);
+        sprintf(ip1,   "%s", config_table_find(cfg_table, FILE_SERVER1_IP));
+        sprintf(port1, "%s", config_table_find(cfg_table, FILE_SERVER1_PORT));
+        sprintf(ip2,   "%s", config_table_find(cfg_table, FILE_SERVER2_IP));
+        sprintf(port2, "%s", config_table_find(cfg_table, FILE_SERVER2_PORT));
         break;
     }
     case 1:
     {
-        sprintf(ip1,   "%s", CLUSTER_3_IP);
-        sprintf(port1, "%s", CLUSTER_3_PORT);
-        sprintf(ip2,   "%s", CLUSTER_1_IP);
-        sprintf(port2, "%s", CLUSTER_1_PORT);
+        sprintf(ip1,   "%s", config_table_find(cfg_table, FILE_SERVER3_IP));
+        sprintf(port1, "%s", config_table_find(cfg_table, FILE_SERVER3_PORT));
+        sprintf(ip2,   "%s", config_table_find(cfg_table, FILE_SERVER1_IP));
+        sprintf(port2, "%s", config_table_find(cfg_table, FILE_SERVER1_PORT));
         break;
     }
     case 2:
     {
-        sprintf(ip1,   "%s", CLUSTER_2_IP);
-        sprintf(port1, "%s", CLUSTER_2_PORT);
-        sprintf(ip2,   "%s", CLUSTER_3_IP);
-        sprintf(port2, "%s", CLUSTER_3_PORT);
+        sprintf(ip1,   "%s", config_table_find(cfg_table, FILE_SERVER2_IP));
+        sprintf(port1, "%s", config_table_find(cfg_table, FILE_SERVER2_PORT));
+        sprintf(ip2,   "%s", config_table_find(cfg_table, FILE_SERVER3_IP));
+        sprintf(port2, "%s", config_table_find(cfg_table, FILE_SERVER3_PORT));
         break;
     }
     default:

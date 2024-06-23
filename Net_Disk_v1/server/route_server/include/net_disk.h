@@ -9,5 +9,6 @@
 #include "route_task.h"
 #include "sql.h"
 #include "client_manager.h"
+#include "config.h"
 
 #endif

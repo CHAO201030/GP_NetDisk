@@ -164,3 +164,11 @@
 [INFO] : Sat Jun 22 21:14:45 2024 user xixi download 456 in ~
 [INFO] : Sat Jun 22 21:14:45 2024 user xixi ls ~
 [INFO] : Sat Jun 22 21:14:50 2024 user xixi exit
+[INFO] : Sun Jun 23 17:03:49 2024 user xixi login
+[INFO] : Sun Jun 23 17:03:50 2024 user xixi ls ~
+[INFO] : Sun Jun 23 17:03:52 2024 user xixi ls ~
+[INFO] : Sun Jun 23 17:03:58 2024 user xixi cd ~/dir1
+[INFO] : Sun Jun 23 17:03:58 2024 user xixi ls ~/dir1
+[INFO] : Sun Jun 23 17:03:59 2024 user xixi cd ~
+[INFO] : Sun Jun 23 17:04:06 2024 user xixi ls ~
+[INFO] : Sun Jun 23 17:04:13 2024 user xixi exit

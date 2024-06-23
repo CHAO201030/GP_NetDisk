@@ -83,7 +83,7 @@ void do_rmdir(client_t *client, char *cmd);
  * @brief 进行 TOKEN 验证
  * @param client 指向当前发送命令的客户端
  * @param token 客户端发送的 TOKEN
- * @return 成功返回0 失败返回1
+ * @return 成功返回0 失败返回-1
 */
 int do_token(client_t *client, char *token);
 

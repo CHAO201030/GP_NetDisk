@@ -13,12 +13,14 @@
 
 #include "../include/net_disk.h"
 
-#define THREAD_NUM "5"
+#define THREAD_NUM "thread_num"
 #define MAX_CAPACITY 1024
 
 int log_fd = -1;
 
 int exit_pipe[2];
+
+config_table_t *cfg_table = NULL;
 
 HashMap *client_manage_map = NULL;
 
@@ -69,11 +71,16 @@ int main(int argc, char* argv[])
         error(-1, errno, "[INFO] : log_file open failed\nReason");
     }
 
-    int sfd = tcp_init(ROUTE_IP, ROUTE_PORT);
+    cfg_table = config_table_create();
+
+    read_config(argv[1], cfg_table);
+
+    int sfd = tcp_init(config_table_find(cfg_table, ROUTE_IP), 
+                       config_table_find(cfg_table, ROUTE_PORT));
 
     int epfd = epoll_create1(0);
 
-    int thread_num = atoi(THREAD_NUM);
+    int thread_num = atoi(config_table_find(cfg_table, THREAD_NUM));
 
     thread_pool_t *p_manager = thread_pool_init(thread_num);
 
