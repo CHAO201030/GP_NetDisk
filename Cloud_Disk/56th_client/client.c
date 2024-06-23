@@ -100,6 +100,29 @@ int getCommandType(const char * str)
         return CMD_TYPE_MKDIR;
     else if(!strcmp(str,"rmdir"))
         return CMD_TYPE_RMDIR;
+    else if(!strcmp(str,"puts"))
+        return CMD_TYPE_PUTS;
+    else if(!strcmp(str,"gets"))
+        return CMD_TYPE_GETS;
     else 
         return CMD_TYPE_NOTCMD;
+}
+
+void commandHandler(int sockfd, train_t *t) {
+    switch(t->type){
+    case CMD_TYPE_LS:
+    case CMD_TYPE_CD:
+    
+    case CMD_TYPE_PWD:
+    case CMD_TYPE_MKDIR:
+    case CMD_TYPE_RMDIR:
+        //要处理的逻辑
+        break;
+    case CMD_TYPE_PUTS:
+        //要处理的逻辑
+        break;
+    case CMD_TYPE_GETS:
+        getsHandler(sockfd, t);
+        break;
+    }
 }

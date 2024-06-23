@@ -8,6 +8,8 @@ typedef enum {
     CMD_TYPE_CD,
     CMD_TYPE_MKDIR,
     CMD_TYPE_RMDIR,
+    CMD_TYPE_PUTS,
+    CMD_TYPE_GETS,
     CMD_TYPE_NOTCMD  //不是命令
 }CmdType;
 
@@ -26,4 +28,6 @@ int parseCommand(const char * input, int len, train_t * pt);
 
 //判断一个字符串是什么命令
 int getCommandType(const char * str);
+
+int login(int clientfd);
 

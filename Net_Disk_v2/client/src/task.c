@@ -66,6 +66,20 @@ void command_analyse(train_t* cmd_train, int route_sfd)
     else if(strncmp(cmd_train->data_buf, "gets ", 5) == 0)
     {
         // TODO
+        /*
+        gets和Puts为长命令，此时业务逻辑为客户端调用下载或者上传子线程去连接到服务器进行下载
+        */
+        thread_args pth_download = {0};
+        strncpy(pth_download.cur_cmd, cmd_train->data_buf, cmd_train->data_len);
+        pth_download.state = CMD_GETS;
+
+        int ret = pthread_create(&pthid, NULL, pth_func, (void*)&pth_download);
+        if(ret != 0) {
+            printf("创建下载线程失败，错误码：%d\n", ret);
+            return 1;
+        }
+        printf("程序执行中...\n");
+
     }
     else if(strncmp(cmd_train->data_buf, "puts ", 5) == 0)
     {
