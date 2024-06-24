@@ -3,10 +3,10 @@
 
 extern MYSQL *sql_conn;
 
-void do_gets(client_t *client, char *cmd)
-{  
-    printf("[INFO] : do_gets begin\n");
+extern int log_fd;
 
+void do_gets(client_t *client, char *cmd)
+{
     char *target_file = strtok(cmd, " ");
     target_file = strtok(NULL, " ");
 
@@ -25,12 +25,7 @@ void do_gets(client_t *client, char *cmd)
     if(sql_do_gets(client, target_file, md5sum,
                    ip1, port1, &part1_size,
                    ip2, port2, &part2_size) == 0)
-    {
-        /**
-         * 1. 验证是否允许下载 ---> 验证成功
-         * 2. 发送多点下载所需的文件信息
-        */
-        
+    {       
         is_valid = true;
         sendn(client->fd, &is_valid, sizeof(is_valid));
 
@@ -40,10 +35,13 @@ void do_gets(client_t *client, char *cmd)
         sendn(client->fd, ip1, sizeof(ip1));
         sendn(client->fd, port1, sizeof(port1));
         sendn(client->fd, &part1_size, sizeof(part1_size));
-        // 发送文件服务器2的 {IP, PORT, Part1_size}
+        // 发送文件服务器2的 {IP, PORT, Part2_size}
         sendn(client->fd, ip2, sizeof(ip2));
         sendn(client->fd, port2, sizeof(port2));
         sendn(client->fd, &part2_size, sizeof(part2_size));
+        
+        // 打印日志
+        LOG_INFO("user %s download %s in %s\n", client->name, target_file, client->path);
     }
     else
     {

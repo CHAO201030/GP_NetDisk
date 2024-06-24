@@ -3,6 +3,8 @@
 
 extern MYSQL *sql_conn;
 
+extern int log_fd;
+
 void generate_salt(char *salt)
 {
     char str[9] = {0};
@@ -24,12 +26,18 @@ void generate_salt(char *salt)
     strcat(salt, "$");
 }
 
+
 void do_register(client_t *client, char *cmd)
 {
-    printf("[INFO] : %s\n", cmd);
+    /*
+        用户注册
+            1. 检查是否重名
+            2. 生成盐值并发送给客户端
+            3. 收到客户端用盐值加密后的密码并存入数据库中
+            4. 告知客户端注册成功
+    */
     
     char *user_name = cmd;
-    printf("[INFO] : user -> %s Register\n", user_name);
 
     if(sql_check_dup_user_name(user_name) == 0)
     {
@@ -51,12 +59,15 @@ void do_register(client_t *client, char *cmd)
         sendn(client->fd, salt, sizeof(salt));
 
         // 保存密文并告知客户端注册成功
-        recvn(client->fd, encrypted_passwd, sizeof(encrypted_passwd));
-
+        int ret = recvn(client->fd, encrypted_passwd, sizeof(encrypted_passwd));
+        printf("%d\n%s\n", ret, encrypted_passwd);
         sql_do_register(user_name, salt, encrypted_passwd);
 
         int register_success = 1;
         sendn(client->fd, &register_success, sizeof(register_success));
+        
+        // 打印日志
+        LOG_INFO("user %s register\n", user_name);
     }
 }
 

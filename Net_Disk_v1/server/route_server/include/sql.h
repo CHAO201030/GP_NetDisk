@@ -58,13 +58,12 @@ int sql_do_ls(const client_t* client, char *server_msg);
 /**
  * @brief SQL 查询数据库进行 CD 操作
  * 
- * @param uid 用户UID
- * @param code 用户所在的当前目录
- * @param pre_code 用户当前目录的上一级目录
+ * @param client 指向当前的客户
  * @param target_dir 目标文件夹
  * @return int 成功返回0 失败返回-1
  */
-int sql_do_cd(int uid, int *code, int *pre_code, const char *target_dir);
+int sql_do_cd(client_t *client, const char *target_dir);
+
 
 /**
  * @brief SQL 查询数据库进行 RM 操作

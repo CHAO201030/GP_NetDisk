@@ -1,7 +1,12 @@
 #include "../include/route_task.h"
 #include "../include/client_manager.h"
+#include "../include/config.h"
 
 extern MYSQL *sql_conn;
+
+extern config_table_t *cfg_table;
+
+extern int log_fd;
 
 void load_balance(char* ip1, char *port1, char *ip2, char* port2)
 {
@@ -11,26 +16,26 @@ void load_balance(char* ip1, char *port1, char *ip2, char* port2)
     {
     case 0:
     {
-        sprintf(ip1,   "%s", CLUSTER_1_IP);
-        sprintf(port1, "%s", CLUSTER_1_PORT);
-        sprintf(ip2,   "%s", CLUSTER_2_IP);
-        sprintf(port2, "%s", CLUSTER_2_PORT);
+        sprintf(ip1,   "%s", config_table_find(cfg_table, FILE_SERVER1_IP));
+        sprintf(port1, "%s", config_table_find(cfg_table, FILE_SERVER1_PORT));
+        sprintf(ip2,   "%s", config_table_find(cfg_table, FILE_SERVER2_IP));
+        sprintf(port2, "%s", config_table_find(cfg_table, FILE_SERVER2_PORT));
         break;
     }
     case 1:
     {
-        sprintf(ip1,   "%s", CLUSTER_3_IP);
-        sprintf(port1, "%s", CLUSTER_3_PORT);
-        sprintf(ip2,   "%s", CLUSTER_1_IP);
-        sprintf(port2, "%s", CLUSTER_1_PORT);
+        sprintf(ip1,   "%s", config_table_find(cfg_table, FILE_SERVER3_IP));
+        sprintf(port1, "%s", config_table_find(cfg_table, FILE_SERVER3_PORT));
+        sprintf(ip2,   "%s", config_table_find(cfg_table, FILE_SERVER1_IP));
+        sprintf(port2, "%s", config_table_find(cfg_table, FILE_SERVER1_PORT));
         break;
     }
     case 2:
     {
-        sprintf(ip1,   "%s", CLUSTER_2_IP);
-        sprintf(port1, "%s", CLUSTER_2_PORT);
-        sprintf(ip2,   "%s", CLUSTER_3_IP);
-        sprintf(port2, "%s", CLUSTER_3_PORT);
+        sprintf(ip1,   "%s", config_table_find(cfg_table, FILE_SERVER2_IP));
+        sprintf(port1, "%s", config_table_find(cfg_table, FILE_SERVER2_PORT));
+        sprintf(ip2,   "%s", config_table_find(cfg_table, FILE_SERVER3_IP));
+        sprintf(port2, "%s", config_table_find(cfg_table, FILE_SERVER3_PORT));
         break;
     }
     default:
@@ -54,6 +59,9 @@ void do_puts(client_t *client, char *cmd)
         quick_trans = true;
         sendn(client->fd, &quick_trans, sizeof(quick_trans));
         sql_do_quick_puts(client, md5sum, file_name);
+        
+        // 打印日志
+        LOG_INFO("user %s quick upload %s in %s\n", client->name, file_name, client->path);
     }
     else if(ret == 1)
     {
@@ -65,11 +73,10 @@ void do_puts(client_t *client, char *cmd)
         char port2[5] = {0};
 
         load_balance(ip1, port1, ip2, port2);
+        
         // 发送文件服务器信息
-        sendn(client->fd, ip1, sizeof(ip1));
-        sendn(client->fd, ip2, sizeof(ip2));
-        sendn(client->fd, port1, sizeof(port1));
-        sendn(client->fd, port2, sizeof(port2));
+        send_file_server_info(client->fd, ip1, sizeof(ip1), port1, sizeof(port1));
+        send_file_server_info(client->fd, ip2, sizeof(ip2), port2, sizeof(port2));
 
         // 接收文件的大小 以及分片的大小
         off_t file_size  = 0;
@@ -84,6 +91,9 @@ void do_puts(client_t *client, char *cmd)
         sql_do_puts(client, file_name, md5sum, file_size, \
                     ip1, port1, part1_size, \
                     ip2, port2, part2_size);
+        
+        // 打印日志
+        LOG_INFO("user %s upload %s in %s\n", client->name, file_name, client->path);
     }
     return;
 }

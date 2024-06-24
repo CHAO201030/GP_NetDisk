@@ -34,7 +34,8 @@ int recvn(int sfd, void *buf, int buf_len)
     return finish_recv;
 }
 
-void send_file_server_info(int sfd, const char *ip, const char *port)
+void send_file_server_info(int sfd, const char *ip, int ip_len, const char *port, int port_len)
 {
-
+    sendn(sfd, (void *)ip, ip_len);
+    sendn(sfd, (void *)port, port_len);
 }

@@ -4,7 +4,7 @@ extern char cur_path[256];
 
 void do_mkdir(train_t server_msg)
 {
-    printf("[INFO] : client do mkdir\n");
+    // printf("[INFO] : client do mkdir\n");
 
     if(strcmp(server_msg.data_buf, "ERROR") == 0)
     {

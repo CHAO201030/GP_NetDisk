@@ -18,21 +18,32 @@
 
 #define BIG_FILE_SIZE ((off_t)(1<<20) * 100)
 
-#define ROUTE_IP "192.168.7.121"
-#define ROUTE_PORT "9527"
+#define ROUTE_IP "route_server_ip"
+#define ROUTE_PORT "route_server_port"
 #define ROUTE_TOKEN_KEY "route token key hope 2025 SDU to PKU"
 
-#define CLUSTER_1_IP "192.168.7.121"
-#define CLUSTER_1_PORT "9528"
+#define FILE_SERVER1_IP "file_server1_ip"
+#define FILE_SERVER1_PORT "file_server1_port"
 
-#define CLUSTER_2_IP "192.168.7.121"
-#define CLUSTER_2_PORT "9529"
+#define FILE_SERVER2_IP "file_server2_ip"
+#define FILE_SERVER2_PORT "file_server2_port"
 
-#define CLUSTER_3_IP "192.168.7.121"
-#define CLUSTER_3_PORT "9530"
+#define FILE_SERVER3_IP "file_server3_ip"
+#define FILE_SERVER3_PORT "file_server3_port"
 
 #define DEBUG_LOG() do{printf("%s, %d\n", __FILE__, __LINE__);}while(0)
 
+#define LOG_INFO(format, ...) do{\
+    time_t t = time(NULL);\
+    char log_buf[256] = {0};\
+    sprintf(log_buf, "[INFO] : %s", ctime(&t));\
+    int log_buf_len = strlen(log_buf);\
+    log_buf[log_buf_len - 1] = ' ';\
+    sprintf(log_buf + log_buf_len, format, ##__VA_ARGS__);\
+    log_buf_len = strlen(log_buf);\
+    write(log_fd, log_buf, log_buf_len);\
+    printf("%s", log_buf);\
+}while(0)
 
 typedef struct{
 	int  fd; 			// 客户端的fd 
@@ -74,7 +85,7 @@ typedef struct{
 typedef struct{
     int fd;                 // 对端的 fd
     CMD_TYPE state;         // 任务的类型 gets  or  puts
-    char task_info[256];    // 任务信息 gets 10001  or  puts 10042
+    char task_info[256];    // 任务信息 gets 10001  or  puts 10422
 }task_t;
 
 typedef struct{

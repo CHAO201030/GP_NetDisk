@@ -25,7 +25,15 @@ int sendn(int sfd, void *buf, int buf_len);
  */
 int recvn(int sfd, void *buf, int buf_len);
 
-void send_file_server_info(int sfd, const char *ip, const char *port);
-
+/**
+ * @brief 发送文件服务器集群的信息
+ * 
+ * @param sfd 对应客户端的fd
+ * @param ip 文件服务器IP
+ * @param ip_len IP的长度
+ * @param port 文件服务器PORT
+ * @param port_len PORT的长度
+ */
+void send_file_server_info(int sfd, const char *ip, int ip_len, const char *port, int port_len);
 
 #endif

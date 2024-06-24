@@ -88,7 +88,7 @@ CHOSE:
                 if(ret == 0)
                 {
                     /**
-                     * 进入到这个区域表示路由服务器已经宕机 客户端把当前的GETS/PUTS任务完成后要退出进程
+                     * 进入到这个区域表示路由服务器已经寄了 客户端把当前的GETS/PUTS任务完成后要退出进程
                      *  1. epoll取消监听route_sfd
                      *  2. close(route_sfd)
                     */

@@ -3,6 +3,8 @@
 
 extern MYSQL *sql_conn;
 
+extern int log_fd;
+
 void do_rm(client_t *client, char *cmd)
 {
     /*
@@ -19,6 +21,9 @@ void do_rm(client_t *client, char *cmd)
     {
         sprintf(server_msg.data_buf, "rm %s success", target_file);
         server_msg.data_len = strlen(server_msg.data_buf);
+
+        // 打印日志
+        LOG_INFO("user %s rm %s in %s\n", client->name, target_file, client->path);
     }
     else
     {

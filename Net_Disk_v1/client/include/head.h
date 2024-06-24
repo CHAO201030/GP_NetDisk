@@ -45,6 +45,6 @@ typedef struct{
     int sfd;        // 文件服务器的fd
     int offset;     // 从哪个位置开始下载
     int part_size;  // 从这个位置开始要下载多少
-}pth_gets_args;
+}pth_trans_args;
 
 #endif
