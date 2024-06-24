@@ -47,11 +47,20 @@ void do_register(int route_sfd)
         char ec_passwd[128] = {0};
         strncpy(ec_passwd, p, strlen(p));
         
-        int ret = sendn(route_sfd, ec_passwd, sizeof(ec_passwd));
-        printf("%d\n%s\n", ret, ec_passwd);
+        sendn(route_sfd, ec_passwd, sizeof(ec_passwd));
+
         int register_success = 0;
         recvn(route_sfd, &register_success, sizeof(register_success));
-        printf("[INFO] : Register %s success...\n", user_name);
+
+        if(register_success)
+        {
+            printf("[INFO] : Register %s success...\n", user_name);
+        }
+        else
+        {
+            printf("[INFO] : Register %s failed...\n", user_name);
+        }
+
         return;
     }
     else

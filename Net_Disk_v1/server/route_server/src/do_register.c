@@ -61,13 +61,19 @@ void do_register(client_t *client, char *cmd)
         // 保存密文并告知客户端注册成功
         int ret = recvn(client->fd, encrypted_passwd, sizeof(encrypted_passwd));
         printf("%d\n%s\n", ret, encrypted_passwd);
-        sql_do_register(user_name, salt, encrypted_passwd);
-
-        int register_success = 1;
-        sendn(client->fd, &register_success, sizeof(register_success));
+        if(sql_do_register(user_name, salt, encrypted_passwd) == 0)
+        {
+            int register_success = 1;
+            sendn(client->fd, &register_success, sizeof(register_success));
         
-        // 打印日志
-        LOG_INFO("user %s register\n", user_name);
+            // 打印日志
+            LOG_INFO("user %s register\n", user_name);
+        }
+        else
+        {
+            int register_success = 0;
+            sendn(client->fd, &register_success, sizeof(register_success));            
+        }
     }
 }
 
@@ -114,6 +120,7 @@ int sql_do_register(const char *user_name, const char *salt, const char *encrypt
     if(mysql_query(sql_conn, query))
     {
         printf("[INFO] : Error making query: %s\n", mysql_error(sql_conn));
+        return 1;
     }
     else
     {
